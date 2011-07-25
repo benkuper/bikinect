@@ -38,7 +38,7 @@ Add your content here.
 	- direct [Default]: Values are passed directly to the output without using the min/max values. Useful for getting the 3d coordinates of the joints through the network. Be careful with midi output. Can be nested.
 	- mapped : Simple value mapping from one element property to a midi value.  Can be nested.
 	- distance : Distance between 2 elements. Default min_value change to 0. Default max_value is change to 1000. /!\ Can't nest processors inside, must be direct < element > objects
-	- rotation : Rotation between 2 elements. Default min_value is changed to 0. Default max_value is change to 360. /!\ Can't nest processors inside, must be direct <element> objects.
+	- rotation : Rotation between 2 elements. Default min_value is changed to 0. Default max_value is change to 360. /!\ Can't nest processors inside, must be direct < element > objects.
 	- timed : Tween a value from the min_value to max_value in the predefined time (NOT IMPLEMENTED YET)
 	- filtered : Sends a gradient value (unlike boolean or conditionnal type) depending on the filter and the inactive parameter. Can be nested. See below for available filters for this type.
 	
