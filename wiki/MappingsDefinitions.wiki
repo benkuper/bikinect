@@ -74,9 +74,9 @@ Add your content here.
 
 	_filter_
 
-	- greater\_than : If 1st element is bigger than 2nd element (NOT for type "filtered")
+	- greater`_`than : If 1st element is bigger than 2nd element (NOT for type "filtered")
 
-	- less\_than : If 1st element is smaller than 2nd element (NOT for type "filtered")
+	- less`_`than : If 1st element is smaller than 2nd element (NOT for type "filtered")
 
 	//needs 2 child processors
 	- between : If 1st element is bigger than 2nd element and less than 3rd element (NOT for type "filtered")
