@@ -92,6 +92,7 @@ Add your content here.
 	
 	_If processor is anything but "direct" and boolean type
 	overflow_
+
 	- none : No filtering applied. If a value is outside it's limit, it will continue to change proportionnally to the mapping range set up. Be careful with midi output.
 	- clip [Default] : If a value is outside it's limit, it will be constraint at the value's limit (0 || 0 -> 127 || 127).
 	- loop : If a value is outside it's limit, it will continue to change but starting from it's opposite limit, like a loop effect (0 -> 127 || 0 -> 127 || 0 -> 127).
@@ -110,10 +111,12 @@ Add your content here.
 	standby : If the condition processor (the 2nd child processor) returns false, the whole mapping won't send anything. If a "multi" processor is used, any inactive processor will return 0 and  the mapping will stop sending when all the child processors are inactive.
 	
 	_If processor is timed (Not implemented yet)_
+
 	_time_
 	- 0 to ... : time in milliseconds that will be used to tween the value to min_value to max_value
 	
 	_If processor is action_
+
 	_action_
 	- changeSet : Changes the mapping set to the specified file and setId (see below)
 	- prevSet : Change the set to the previous child in scope. If last child is reached, nextSet load the 1st child in scope.
@@ -126,6 +129,7 @@ Add your content here.
 	- the set ID to load. if not set, the first mapping set in the scope will be used.
 	
 	_(Below is for feedback only)_
+
 	_showFeedback_ Boolean to choose wether to display the processor's feedback or not. Default true.
 	
 	_labelFeedback_ Boolean to choose wether to display the processor's label feedback. Only use when showFeedback is set to true and label is set. Default true.
