@@ -50,14 +50,14 @@ Add your content here.
 	- action : Triggers an action when a positive value is passed. See below available actions.
     
 	
-	_If processor is boolean / conditionnal. Optional
-	[effect]_
+	_If processor is boolean / conditionnal. Optional_
+	_[effect]_
 	- noeffect [Default] : Boolean standard effect. 
 	- trigger  : Makes bang-like effect with a boolean processor. Sends always min_value until the filter is validated, then throws once max_value and comes back to sending 0 until the filter is off and validated again. 
 	- toggle : Makes a toggle-like effect with a boolean processor. When the filter is validated, switches the value between min_value and max_value.
 
-	_If processor requires filter. Filters are operators that return either 0 or 1. This value is then used by the processor to send the final value.
-	[filter]_
+	_If processor requires filter. Filters are operators that return either 0 or 1. This value is then used by the processor to send the final value._
+	_[filter]_
 	- greater\_than : If 1st element is bigger than 2nd element (NOT for type "filtered")
 	- less\_than : If 1st element is smaller than 2nd element (NOT for type "filtered")
 	//needs 2 child processors
@@ -71,13 +71,13 @@ Add your content here.
 	
 	
 	
-	_If processor is "conditionnal".
-	[operator]_
+	_If processor is "conditionnal"._
+	_[operator]_
 	- and [Default] : AND operator. The processor will return 1 if all the nested processors returns 1..
 	- or : OR operator. The processor will return 1 if at least one processor returns 1.
 
-	_If processor is anything but "direct"
-	[min_value / max_balue]_
+	_If processor is anything but "direct"_
+	_[min_value / max_value]_
 	- low_value : Value sent when boolean (or trigger) filter does not pass. Default -500 (for direct joint x/y position easy mapping)
 	- high_value : Value sent boolean (or trigger) filter passes. Default 500 (for direct joint x/y position easy mapping)
 	
