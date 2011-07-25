@@ -6,7 +6,7 @@
 Add your content here.
 
 
- * MAPPING_SETS : *
+ * *MAPPING_SETS :*
 	They are sets of mappings with an identifier. This allows to switch between sets at anytime, all the controller and mappings will be updated.
     _[id]_ Id of the mapping set. Required if multiple mapping sets are used. Must be unique.
 	_[shortcut]_ Keyboard shortcut of the mapping set. Allow to launch the mapping set via the keyboard. Must be only 1 character. Optional.
