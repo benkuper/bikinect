@@ -13,7 +13,7 @@ Add your content here.
 	_[permanent]_ Boolean to choose wether the mapping set is a permanent mapping (i. e. loaded even if the chosen set is not this) or not. Useful for action processors that need to stick in a mapping sequence. Default false.
 	_[inScope]_ Boolean to choose wether the mappingset is used in the scope for nextSet action and default set loading. If set to false, when loading this set as current Set, the next set in the scope will be loaded. Useful for permanent sets that you don't want to load alone, or for mappings you want to access only via their id. Default true. /!\ At least one mapping set must be inScope, otherwise the processing will get in an infinite loop, search over and over for an inScope set.
 	
- *MAPPINGS :*
+ * *MAPPINGS :*
 	_[id]_ Id of the mapping. Default "". (not used in the current version). Must be unique if mentionned.
 	
 	_[label]_ Label describing the mapping, for feedback . Default "". (not used in the current version). 
@@ -27,7 +27,7 @@ Add your content here.
 	_</output>_
 	
 	
- *PROCESSORS :* 
+ * *PROCESSORS :* 
 	_[id]_ Processor's id. Not used in the current version, but may be used for linking in future versions.
 	
 	_[label]_ Processor's title, for feedback.
@@ -125,7 +125,7 @@ Add your content here.
 	
 	
 
- *ELEMENTS :*
+ * *ELEMENTS :*
 	
 	_[type]_
     - joint : A Skeleton Joint retrieved from OpenNI. See below for available properties
@@ -159,7 +159,7 @@ Add your content here.
 	
 	
 	
- *MAPPING OUTPUTS*
+ * *MAPPING OUTPUTS*
 
 	# MIDI Output
 	_[type]_
