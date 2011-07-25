@@ -35,17 +35,23 @@ Add your content here.
 	_label_ Processor's title, for feedback.
 	
 	_type_
-	- direct `[`Default`]`: Values are passed directly to the output without using the min/max values. Useful for getting the 3d coordinates of the joints through the network. Be careful with midi output. Can be nested.\n
-	- mapped : Simple value mapping from one element property to a midi value.  Can be nested.\n
+
+	- direct `[`Default`]`: Values are passed directly to the output without using the min/max values. Useful for getting the 3d coordinates of the joints through the network. Be careful with midi output. Can be nested.
+
+	- mapped : Simple value mapping from one element property to a midi value.  Can be nested.
+
 	- distance : Distance between 2 elements. Default min_value change to 0. Default max_value is change to 1000. /!\ Can't nest processors inside, must be direct < element > objects
 	- rotation : Rotation between 2 elements. Default min_value is changed to 0. Default max_value is change to 360. /!\ Can't nest processors inside, must be direct < element > objects.
+
 	- timed : Tween a value from the min_value to max_value in the predefined time (NOT IMPLEMENTED YET)
+
 	- filtered : Sends a gradient value (unlike boolean or conditionnal type) depending on the filter and the inactive parameter. Can be nested. See below for available filters for this type.
 	
 	
 	_(these types return boolean values)_
 
 	- boolean : Sends either min_value or max_value depending on a (boolean) filter. Default min_value is changed to 0. Default max_value is change to 1. Can be nested.
+
 	- conditionnal : Allows to have multiple processors nested with a conditionnal token ("and", "or"). Can be nested.
     
 	
@@ -57,23 +63,32 @@ Add your content here.
 	_If processor is boolean / conditionnal. Optional_
 
 	_effect_
+
 	- noeffect [Default] : Boolean standard effect. 
+
 	- trigger  : Makes bang-like effect with a boolean processor. Sends always min_value until the filter is validated, then throws once max_value and comes back to sending 0 until the filter is off and validated again. 
+
 	- toggle : Makes a toggle-like effect with a boolean processor. When the filter is validated, switches the value between min_value and max_value.
 
 	_If processor requires filter. Filters are operators that return either 0 or 1. This value is then used by the processor to send the final value._
 
 	_filter_
+
 	- greater\_than : If 1st element is bigger than 2nd element (NOT for type "filtered")
+
 	- less\_than : If 1st element is smaller than 2nd element (NOT for type "filtered")
+
 	//needs 2 child processors
 	- between : If 1st element is bigger than 2nd element and less than 3rd element (NOT for type "filtered")
 	
     _(Below are filters for the "filtered" type. All of them need 2 processors)_
 
 	- greatest : returns the biggest value from all the nested processors / elements. (Only for type "filtered")
+
 	- lowest : returns the lowest value from all the nested processors / elements. (Only for type "filtered")
+
 	- average : returns the average value of all the nested processors / elements.( Only for type "filtered")
+
 	- gate : returns the value of the 1st child only if the 2nd child is greater than 0 (preferrably use a boolean/conditionnal processor for the 2nd child)(Only for type "filtered")
 	
 	
@@ -81,33 +96,45 @@ Add your content here.
 	_If processor is "conditionnal"._
 
 	_operator_
+
 	- and [ Default ] : AND operator. The processor will return 1 if all the nested processors returns 1.
+
 	- or : OR operator. The processor will return 1 if at least one processor returns 1.
 
 	_If processor is anything but "direct"_
 
-	_minVvalue / maxVvalue_
+	_minVvalue / maxValue_
+
 	- minValue : Value sent when boolean (or trigger) filter does not pass. Default -500 (for direct joint x/y position easy mapping)
+
 	- maxValue: Value sent boolean (or trigger) filter passes. Default 500 (for direct joint x/y position easy mapping)
 	
 	_If processor is anything but "direct" and boolean type_
 
 	_overflow_
+
 	- none : No filtering applied. If a value is outside it's limit, it will continue to change proportionnally to the mapping range set up. Be careful with midi output.
+
 	- clip [Default] : If a value is outside it's limit, it will be constraint at the value's limit (0 || 0 -> 127 || 127).
+
 	- loop : If a value is outside it's limit, it will continue to change but starting from it's opposite limit, like a loop effect (0 -> 127 || 0 -> 127 || 0 -> 127).
+
 	- zero : If a value is outside the limit, it will be considered as 0 (0 || 0 -> 127 || 0).
 	
 	_Only used for children elements and feedback. Sets a default value for all childrens._
 
 	_[axis]_
+
 	- "x", "y", "z","xy","xz","yz": 1D or 2D axis. If not set, parent's processor's axis will be used (or "x" if no parent processor).
 	
 	_If processor is "filtered"_
 
 	_inactive_
+
 	zero [Default] : If the condition processor (the 2nd child processor) returns false, the value passed will be 0.
+
 	keepValue : If the condition processor (the 2nd child processor) returns false, the value passed will be the last value computed when the condition processor was active.
+
 	standby : If the condition processor (the 2nd child processor) returns false, the whole mapping won't send anything. If a "multi" processor is used, any inactive processor will return 0 and  the mapping will stop sending when all the child processors are inactive.
 	
 	_If processor is timed (Not implemented yet)_
@@ -118,14 +145,19 @@ Add your content here.
 	_If processor is action_
 
 	_action_
+
 	- changeSet : Changes the mapping set to the specified file and setId (see below)
+
 	- prevSet : Change the set to the previous child in scope. If last child is reached, nextSet load the 1st child in scope.
+
 	- nextSet : Change the set to the next child in scope. If last child is reached, nextSet load the 1st child in scope.
 	
 	_file_ The name of the file to be loaded. The file must be in the /data folder.
-	- <filename>.xml : if not specified, the current file will be used. "mappings.xml" is the default loaded file.
+
+	- < filename >.xml : if not specified, the current file will be used. "mappings.xml" is the default loaded file.
 	
 	_set_
+
 	- the set ID to load. if not set, the first mapping set in the scope will be used.
 	
 	_(Below is for feedback only)_
@@ -143,36 +175,46 @@ Add your content here.
  * *ELEMENTS :*
 	
 	_type_
+
     - joint : A Skeleton Joint retrieved from OpenNI. See below for available properties
+
 	- value : A predefined custom value, see below.
+
 	- point : A predefined 3D Point that will be used as a Vector (need to precise x, y and z coordinates);
 	
 	_If type is joint_
 
 	_target_ : All the skeleton's joint as tokens.
-	head, neck, torso, left_shoulder, right_shoudler, left_elbow, right_elbow, left_hand_, right_hand, left_hip, right_hip, left_knee, right_knee, left_foot, right_foot
+	Tokens available : head, neck, torso, left_shoulder, right_shoudler, left_elbow, right_elbow, left_hand_, right_hand, left_hip, right_hip, left_knee, right_knee, left_foot, right_foot
 	
 	_If type is of type vector (joint or point) and 1 axis is needed_
 
 	_axis_
+
 	- "x", "y", "z","xy","xz","yz": The 1D or 2D axis of the joints. If not set, processor's axis will be used.
 	
 	
 	_If type is value_
+
 	_value_ The constant value to process.
 	
 	_If type is point_
+
 	_x, y ,z_
+
 	- "x","y","z" : the 3 coordinates to define for the 3D Point (e.g. x="10" y="-300" z="1500"). Units relative to the Kinect's environment (in centimeters). Default 0,0,0.
+
 	- "vector3d" : the PVector representation of the joint. Should not be necessary as the processor takes automatically the vector3d if needed.
 	
 	_If type is joint or custom_point (or more generally a 3D Point)_
 	_property_
+
 	- position [Default] : The 3d Position of the point.
 	
 	_------- Not implemented yet --------_
 
 	- velocity : Velocity of a joint, filtered by coordinates (1D, 2D or 3D).
+
 	- acceleration : Acceleration of the joint (same filtering system as velocity).
 	
 	
@@ -180,15 +222,14 @@ Add your content here.
  * *MAPPING OUTPUTS*
 
 	* MIDI Output
+
 	_type_
+
 	- "note" : value passed as a noteOn event.
 	- "controller" [Default] : value passed as a controllerChange event.
 	
     _device_
     The MIDI device number to send. Default 0. Not used if deviceMap is > 0.
-	
-	_channel_
-	The MIDI channel number to send. Default 1. Not used if channelMap is > 0.
 	
 	_channel_
 	The MIDI channel number to send. Default 1. Not used if channelMap is > 0.
@@ -209,6 +250,7 @@ Add your content here.
 	The mininum channel number that will be sent (i.e. if the returned value is 0, what channel will be sent).
 	
 	_maxChannel_
+
 	The maximum channel number that will be sent (i.e. if the returned value is 1, what channel will be sent).
 	
 	_minVelocity_
@@ -218,10 +260,12 @@ Add your content here.
 	The maximum velocity number that will be sent (i.e. if the returned value is 1, what velocity will be sent).
 	
 	_distinctNotes_
+
 	true or false : If the _type_ is "note" and the channel is the same as the previous sent channel, the output won't send anything until the channel has changed. Useful to avoid repetition notes when the mapping is used as a standard midi keyboard.
 	
 	
 	* OSC Output
+
 	_host_
 	The host to which send the OSC messages. Default set in config.xml. (NOT IMPLEMENTED YET, only host from config.xml will be sent).
 	
