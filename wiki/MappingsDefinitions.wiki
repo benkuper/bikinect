@@ -8,7 +8,7 @@ Add your content here.
 
  * *MAPPING_SETS :*
 	They are sets of mappings with an identifier. This allows to switch between sets at anytime, all the controller and mappings will be updated.
-    _[id]_ Id of the mapping set. Required if multiple mapping sets are used. Must be unique.
+    _ [id] _ Id of the mapping set. Required if multiple mapping sets are used. Must be unique.
 	_[shortcut]_ Keyboard shortcut of the mapping set. Allow to launch the mapping set via the keyboard. Must be only 1 character. Optional.
 	_[permanent]_ Boolean to choose wether the mapping set is a permanent mapping (i. e. loaded even if the chosen set is not this) or not. Useful for action processors that need to stick in a mapping sequence. Default false.
 	_[inScope]_ Boolean to choose wether the mappingset is used in the scope for nextSet action and default set loading. If set to false, when loading this set as current Set, the next set in the scope will be loaded. Useful for permanent sets that you don't want to load alone, or for mappings you want to access only via their id. Default true. /!\ At least one mapping set must be inScope, otherwise the processing will get in an infinite loop, search over and over for an inScope set.
@@ -161,7 +161,7 @@ Add your content here.
 	
  * *MAPPING OUTPUTS*
 
-	# MIDI Output
+	* MIDI Output
 	_[type]_
 	- "note" : value passed as a noteOn event.
 	- "controller" [Default] : value passed as a controllerChange event.
@@ -203,7 +203,7 @@ Add your content here.
 	true or false : If the [type] is "note" and the channel is the same as the previous sent channel, the output won't send anything until the channel has changed. Useful to avoid repetition notes when the mapping is used as a standard midi keyboard.
 	
 	
-	#OSC Output
+	* OSC Output
 	_[host]_
 	The host to which send the OSC messages. Default set in config.xml. (NOT IMPLEMENTED YET, only host from config.xml will be sent).
 	
