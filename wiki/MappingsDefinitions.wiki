@@ -86,13 +86,13 @@ Add your content here.
 
 	_If processor is anything but "direct"_
 
-	_min_value / max_value_
-	- low_value : Value sent when boolean (or trigger) filter does not pass. Default -500 (for direct joint x/y position easy mapping)
-	- high_value : Value sent boolean (or trigger) filter passes. Default 500 (for direct joint x/y position easy mapping)
+	_minVvalue / maxVvalue_
+	- minValue : Value sent when boolean (or trigger) filter does not pass. Default -500 (for direct joint x/y position easy mapping)
+	- maxValue: Value sent boolean (or trigger) filter passes. Default 500 (for direct joint x/y position easy mapping)
 	
-	_If processor is anything but "direct" and boolean type
-	overflow_
+	_If processor is anything but "direct" and boolean type_
 
+	_overflow_
 	- none : No filtering applied. If a value is outside it's limit, it will continue to change proportionnally to the mapping range set up. Be careful with midi output.
 	- clip [Default] : If a value is outside it's limit, it will be constraint at the value's limit (0 || 0 -> 127 || 127).
 	- loop : If a value is outside it's limit, it will continue to change but starting from it's opposite limit, like a loop effect (0 -> 127 || 0 -> 127 || 0 -> 127).
@@ -170,8 +170,9 @@ Add your content here.
 	_property_
 	- position [Default] : The 3d Position of the point.
 	
-	------- Not implemented yet --------
-	- velocity : Velocity of a joint, filtered by coordinates (1D, 2D or 3D)
+	_------- Not implemented yet --------_
+
+	- velocity : Velocity of a joint, filtered by coordinates (1D, 2D or 3D).
 	- acceleration : Acceleration of the joint (same filtering system as velocity).
 	
 	
