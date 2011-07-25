@@ -81,7 +81,7 @@ Add your content here.
 	_If processor is "conditionnal"._
 
 	_operator_
-	- and [Default] : AND operator. The processor will return 1 if all the nested processors returns 1..
+	- and [ Default ] : AND operator. The processor will return 1 if all the nested processors returns 1.
 	- or : OR operator. The processor will return 1 if at least one processor returns 1.
 
 	_If processor is anything but "direct"_
