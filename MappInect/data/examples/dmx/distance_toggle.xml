@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<mappings>
+	<mappingset>
+		<mapping id="distance_dmx">
+			<processor type="boolean" label="Hands distance Toggle to DMX"  effect="toggle" filter="less_than">
+				<processor type="distance"minValue="100" maxValue="800" >
+					<element type="joint" target="left_hand" property="position" />
+					<element type="joint" target="right_hand" property="position" />
+				</processor>
+				<processor type="direct">
+					<element type="value" value="200" />
+				</processor>
+			</processor>
+			<output>
+				<dmx startChannel="6" minOut="0" maxOut="255" />
+			</output>
+		</mapping>
+	</mappingset>
+</mappings>

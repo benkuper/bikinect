@@ -467,7 +467,7 @@ class MappingProcessor implements IRawValueProvider
         vectors[i] = new PVector();
        
         context.convertRealWorldToProjective(rawVector,vectors[i]);
-         println("*** Feedback vector "+vectors[i]);
+         //println("*** Feedback vector "+vectors[i]);
       }
     }
     
