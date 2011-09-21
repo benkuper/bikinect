@@ -212,11 +212,11 @@
 
 <mappings>	
 	<mappingset id="liveControls" permanent="true" inScope="false">
-		<mapping id="nextLine">
-			<processor type="boolean" effect="trigger" filter="less_than" label="Bongos and Piano">
+		<mapping id="nextLine" builderX="100" builderY="200">
+			<processor type="boolean" effect="trigger" filter="less_than" label="Bongos and Piano" builderX="100" builderY="200">
 				<processor type="distance" >
 					<element type="joint" target="right_hand" property="position" />
-					<element type="point" x="500" y="-100" z="2400" />
+					<element type="point" x="450" y="-210" z="2040" />
 				</processor>
 				<processor type="direct">
 					<element type="value" value="200" />
@@ -227,11 +227,11 @@
 			</output>
 		</mapping>
 		
-		<mapping id="nextLine">
+		<mapping id="nextLine" builderX="300" builderY="100">
 			<processor type="boolean" effect="trigger" filter="less_than" label="Kick Drum">
 				<processor type="distance" >
 					<element type="joint" target="left_hand" property="position" />
-					<element type="point" x="500" y="-100" z="2400" />
+					<element type="point" x="450" y="-210" z="2040"  />
 				</processor>
 				<processor type="direct">
 					<element type="value" value="200" />
@@ -248,7 +248,7 @@
 				<processor type="boolean" filter="less_than" label="Next Mapping Set">
 					<processor type="distance" >
 						<element type="joint" target="right_hand" property="position" />
-						<element type="point" x="670" y="-170" z="2000" />
+						<element type="point" x="600" y="-200" z="1710" />
 					</processor>
 					<processor type="direct">
 						<element type="value" value="200" />
