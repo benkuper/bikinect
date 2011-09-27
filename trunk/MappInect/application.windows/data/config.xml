@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <data>
 	<!-- MIDI SETTINGS -->
-	<midi outDeviceID="3" /> <!-- Default MIDI Output Device ID -->
+	<midi active="true" outDeviceID="3" /> <!-- Default MIDI Output Device ID -->
 	
-	<!-- OSC SETTINGS --> <!-- NOT IMPLEMENTED YET. FOR TESTING PURPOSE ONLY -->
-	<osc method="udp" inPort="4000" outPort="4444" host="127.0.0.1" addressPrefix="/mappInect" /> <!-- OSC DEFAULT SETTINGS. Method can only be "udp" at this time. -->
+	<!-- OSC SETTINGS -->
+	<osc active="true" method="udp" inPort="4000" outPort="4444" host="127.0.0.1" addressPrefix="/mappInect" /> <!-- OSC DEFAULT SETTINGS. Method can only be "udp" at this time. -->
+	
+	<!-- DMX SETTINGS -->
+	<dmx active="true" hardware="dmxpro" port="COM5" baudrate="115000" numChannels="512" />
 	
 	<!-- STARTUP -->
-	<startup sendMappings="true" showInfos="true" showHandsCoords="true" showMidiDevices="true" defaultMappingFile="live_jazz.xml" />
+	<startup sendMappings="true" showInfos="true" showHandsCoords="true" showMidiDevices="true" defaultMappingFile="examples/dmx/distance_toggle.xml" />
 	
 	<!-- KINECT SETTINGS -->
 	<kinect sdk="openni" /> <!-- sdk can be either "openni" or "microsoft" (not implemented yet). -->
