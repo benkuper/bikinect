@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+
+* MAPPING_SETS :
+	They are sets of mappings with an identifier. This allows to switch between sets at anytime, all the controller and mappings will be updated.
+    [id] Id of the mapping set. Required if multiple mapping sets are used. Must be unique.
+	[shortcut] Keyboard shortcut of the mapping set. Allow to launch the mapping set via the keyboard. Must be only 1 character. Optional.
+	[permanent] Boolean to choose wether the mapping set is a permanent mapping (i. e. loaded even if the chosen set is not this) or not. Useful for action processors that need to stick in a mapping sequence. Default false.
+	[inScope] Boolean to choose wether the mappingset is used in the scope for nextSet action and default set loading. If set to false, when loading this set as current Set, the next set in the scope will be loaded. Useful for permanent sets that you don't want to load alone, or for mappings you want to access only via their id. Default true. /!\ At least one mapping set must be inScope, otherwise the processing will get in an infinite loop, search over and over for an inScope set.
+	
+* MAPPINGS :
+	[id] Id of the mapping. Default "". (not used in the current version). Must be unique if mentionned.
+	
+	[label] Label describing the mapping, for feedback . Default "". (not used in the current version). 
+	
+	[midiType]
+	- noteOn : value passed as a noteOn event.
+	- controller [Default] : value passed as a controllerChange event.
+	
+	[midiChannel]
+	- the channel to send to. Values between 0 and 127. Default 1	
+	
+	<processor>
+		The processor to use to calculate the value to send. See below available processors and their usage.
+	</processor>
+	
+* PROCESSORS : 
+	[id] Processor's id. Not used in the current version, but may be used for linking in future versions.
+	
+	[label] Processor's title, for feedback.
+	
+	[type]
+	- direct [Default]: Values are passed directly to the output without using the min/max values. Useful for getting the 3d coordinates of the joints through the network. Be careful with midi output. Can be nested.
+	- mapped : Simple value mapping from one element property to a midi value.  Can be nested.
+	- distance : Distance between 2 elements. Default min_value change to 0. Default max_value is change to 1000. /!\ Can't nest processors inside, must be direct <element> objects
+	- rotation : Rotation between 2 elements. Default min_value is changed to 0. Default max_value is change to 360. /!\ Can't nest processors inside, must be direct <element> objects.
+	- timed : Tween a value from the min_value to max_value in the predefined time (NOT IMPLEMENTED YET)
+	- filtered : Sends a gradient value (unlike boolean or conditionnal type) depending on the filter. Can be nested. See below for available filters for this type.
+	
+	
+	(these types return boolean values)
+	- boolean : Sends either min_value or max_value depending on a (boolean) filter. Default min_value is changed to 0. Default max_value is change to 1. Can be nested.
+	- conditionnal : Allows to have multiple processors nested with a conditionnal token ("and", "or"). Can be nested.
+    
+	
+	(specials)
+	- action : Triggers an action when a positive value is passed. See below available actions.
+    
+	
+	* If processor is boolean / conditionnal. Optional
+	[effect]
+	- noeffect [Default] : Boolean standard effect. 
+	- trigger  : Makes bang-like effect with a boolean processor. Sends always min_value until the filter is validated, then throws once max_value and comes back to sending 0 until the filter is off and validated again. 
+	- toggle : Makes a toggle-like effect with a boolean processor. When the filter is validated, switches the value between min_value and max_value.
+
+	* If processor requires filter. Filters are operators that return either 0 or 1. This value is then used by the processor to send the final value.
+	[filter]
+	- greater_than : If 1st element is bigger than 2nd element (NOT for type "filtered")
+	- less_than : If 1st element is smaller than 2nd element (NOT for type "filtered")
+	- between : If 1st element is bigger than 2nd element and less than 3rd element (NOT for type "filtered")
+	
+    (Below are filters for the "filtered" type. All of them need 2 processors)
+	- greatest : returns the biggest value from all the nested processors / elements. (Only for type "filtered")
+	- lowest : returns the lowest value from all the nested processors / elements. (Only for type "filtered")
+	- average : returns the average value of all the nested processors / elements.( Only for type "filtered")
+	- gate : returns the value of the 1st child only if the 2nd child is greater than 0 (preferrably use a boolean/conditionnal processor for the 2nd child)(Only for type "filtered")
+	
+	[nonzero]
+	true of false : Choose wether value is sent or not if value return by processor is 0. Default false. Useful with a "gate" filter to only pass value you want. You can use this in addition of [overflow]->"zero" parameter below for controlling output depending on zero value on non boolean or filtered processors.
+	
+	* If processor is "conditionnal".
+	[operator]
+	- and [Default] : AND operator. The processor will return 1 if all the nested processors returns 1..
+	- or : OR operator. The processor will return 1 if at least one processor returns 1.
+
+	* If processor is anything but "direct"
+	[min_value / max_balue]
+	- low_value : Value sent when boolean (or trigger) filter does not pass. Default -500 (for direct joint x/y position easy mapping)
+	- high_value : Value sent boolean (or trigger) filter passes. Default 500 (for direct joint x/y position easy mapping)
+	
+	* If processor is anything but "direct" and boolean type
+	[overflow]
+	- none : No filtering applied. If a value is outside it's limit, it will continue to change proportionnally to the mapping range set up. Be careful with midi output.
+	- clip [Default] : If a value is outside it's limit, it will be constraint at the value's limit (0 || 0->127 || 127).
+	- loop : If a value is outside it's limit, it will continue to change but starting from it's opposite limit, like a loop effect (0->127 || 0->127 || 0->127).
+	- zero : If a value is outside the limit, it will be considered as 0 (0 || 0->127 || 0).
+	
+	* Only used for children elements and feedback. Sets a default value for all childrens.
+	[axis]
+	- "x", "y", "z","xy","xz","yz": 1D or 2D axis. If not set, parent's processor's axis will be used (or "x" if no parent processor).
+	
+	* If processor is timed
+	[time]
+	- 0 to ... : time in milliseconds that will be used to tween the value to min_value to max_value
+	
+	* If processor is action
+	[action]
+	- changeSet : Changes the mapping set to the specified file and setId (see below)
+	- nextSet : Change the set to the next child in scope. If last child is reached, nextSet load the 1st child in scope.
+	
+	[file] The name of the file to be loaded. The file must be in the /data folder.
+	- <filename>.xml : if not specified, the current file will be used. "mappings.xml" is the default loaded file.
+	
+	[set]
+	- the set ID to load. if not set, the first mapping set in the scope will be used.
+	
+	(Below is for feedback only)
+	[showFeedback] Boolean to choose wether to display the processor's feedback or not. Default true.
+	
+	[labelFeedback] Boolean to choose wether to display the processor's label feedback. Only use when showFeedback is set to true and label is set. Default true.
+	
+	<elements>
+		[...] A series of elements, depending on the processor type. If more elements than needed are declared, only elements starting from the first one will be used.
+	</elements>
+	
+	
+
+* ELEMENTS : 
+	
+	[type]
+    - joint : A Skeleton Joint retrieved from OpenNI. See below for available properties
+	- value : A predefined custom value, see below.
+	- point : A predefined 3D Point that will be used as a Vector (need to precise x, y and z coordinates);
+	
+	* If type is joint
+	[target] : All the skeleton's joint as tokens.
+	head, neck, torso, left_shoulder, right_shoudler, left_elbow, right_elbow, left_hand_, right_hand, left_hip, right_hip, left_knee, right_knee, left_foot, right_foot
+	
+	* If type is of type vector (joint or point) and 1 axis is needed
+	[axis]
+	- "x", "y", "z","xy","xz","yz": The 1D or 2D axis of the joints. If not set, processor's axis will be used.
+	
+	
+	* If type is value
+	[value] The constant value to process.
+	
+	* If type is point
+	[x, y ,z]
+	- "x","y","z" : the 3 coordinates to define for the 3D Point (e.g. x="10" y="-300" z="1500"). Units relative to the Kinect's environment (in centimeters). Default 0,0,0.
+	- "vector3d" : the PVector representation of the joint. Should not be necessary as the processor takes automatically the vector3d if needed.
+	
+	* If type is joint or custom_point (or more generally a 3D Point)
+	[property]
+	- position [Default] : The 3d Position of the point.
+	
+	------- Not implemented yet --------
+	- velocity : Velocity of a joint, filtered by coordinates (1D, 2D or 3D)
+	- acceleration : Acceleration of the joint (same filtering system as velocity).
+	
+-->
+
+<mappings>
+	<mappingset id="set0" permanent="true" inScope="false">
+		
+		<mapping>
+			<processor type="action" action="nextSet">
+				
+				<processor type="boolean" filter="less_than">
+					
+					<processor type="distance" filter="less_than" >
+						<element type="joint" target="right_hand" property="position" />
+						<element type="point" x="600" y="500" z="1000" />
+					</processor>
+					
+					<processor type="direct">
+						<element type="value" value="200" />
+					</processor>
+					
+				</processor>
+				
+			</processor>
+		</mapping>
+
+		
+		<mapping>
+			<processor type="action" action="prevSet">
+				
+				<processor type="boolean" filter="less_than">
+					
+					<processor type="distance" filter="less_than" >
+						<element type="joint" target="left_hand" property="position" />
+						<element type="point" x="-600" y="500" z="1000" />
+					</processor>
+					
+					<processor type="direct">
+						<element type="value" value="200" />
+					</processor>
+					
+				</processor>
+				
+			</processor>
+		</mapping>
+		
+	</mappingset>
+	
+	<mappingset id="Booleans basketball">
+		<mapping>
+			<processor type="boolean" effect="trigger" filter="less_than">
+				<element type="joint" target="left_hand" property="position" axis="y" />
+				<element type="value" value="-300" />
+			</processor>
+		</mapping>
+		
+		<mapping midi_channel="2">
+			<processor type="boolean" effect="trigger" filter="less_than">
+				<processor type="distance" filter="less_than" >
+					<element type="joint" target="left_hand" property="position" />
+					<element type="joint" target="right_hand" property="position" />
+				</processor>
+				
+				<processor type="direct">
+					<element type="value" value="200" />
+				</processor>
+				
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Single mapped value">
+		<mapping>
+			<processor type="mapped">
+				<element type="joint" target="left_hand" property="position" axis="x" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Multiple mappings (single joint)">
+		<mapping>
+			<processor type="mapped" label="X">
+				<element type="joint" target="left_hand" property="position" axis="x" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" label="Y" min_value="0" max_value="600">
+				<element type="joint" target="left_hand" property="position" axis="y" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" label="Z" min_value="1000" max_value="1500">
+				<element type="joint" target="left_hand" property="position" axis="z" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Multiple joints mapping">
+		<mapping>
+			<processor type="mapped" >
+				<element type="joint" target="left_hand" property="position" axis="x" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" min_value="0" max_value="600">
+				<element type="joint" target="left_hand" property="position" axis="y" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" min_value="1000" max_value="1500">
+				<element type="joint" target="left_hand" property="position" axis="z" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" >
+				<element type="joint" target="head" property="position" axis="x" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" >
+				<element type="joint" target="torso" property="position" axis="y" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" >
+				<element type="joint" target="left_elbow" property="position" axis="x" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" >
+				<element type="joint" target="right_hand" property="position" axis="x" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" >
+				<element type="joint" target="right_hand" property="position" axis="y" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Booleans">
+		<mapping>
+			<processor type="boolean" filter="less_than">
+				<element type="joint" target="left_hand" property="position" axis="x" />
+				<element type="value" value="-300" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="boolean" filter="greater_than">
+				<element type="joint" target="left_hand" property="position" axis="y" />
+				<element type="value" value="300" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="boolean" filter="between">
+				<element type="joint" target="left_hand" property="position" axis="z" />
+				<element type="value" value="1000" />
+				<element type="value" value="1500" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Booleans : triggers and toggles">
+		<mapping>
+			<processor type="boolean" effect="trigger" filter="less_than">
+				<element type="joint" target="left_hand" property="position" axis="y" />
+				<element type="value" value="-300" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="boolean" effect="toggle" filter="less_than">
+				<element type="joint" target="left_hand" property="position" axis="z" />
+				<element type="value" value="1000" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Booleans : conditionnals">
+		<mapping>
+			<processor type="conditionnal">
+				<processor type="boolean" filter="greater_than">
+					<element type="joint" target="left_hand" property="position" axis="y" />
+					<element type="value" value="300" />
+				</processor>
+				<processor type="boolean" filter="less_than">
+					<element type="joint" target="right_hand" property="position" axis="y" />
+					<element type="value" value="-200" />
+				</processor>
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Mapping types : Distance">
+		<mapping>
+			<processor type="distance" >
+				<element type="joint" target="left_hand" />
+				<element type="joint" target="right_hand" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Mapping types : Rotation ">
+		<mapping>
+			<processor type="rotation" axis="xy" >
+				<element type="joint" target="left_hand"  />
+				<element type="joint" target="right_hand" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Mapping types : Rotation YZ">
+		<mapping>
+			<processor type="rotation" axis="yz" >
+				<element type="joint" target="left_hand"  />
+				<element type="joint" target="right_hand" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Complex mapping and Booleans">
+		<mapping>
+			<processor type="boolean" filter="less_than">
+				<processor type="distance">
+					<element type="joint" target="left_hand" />
+					<element type="joint" target="right_hand" />
+				</processor>
+				<processor type="direct">
+					<element type="value" value="500" />
+				</processor>
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Complex mapping and Boolean effects">
+		<mapping>
+			<processor type="boolean" effect="trigger" filter="less_than">
+				<processor type="distance">
+					<element type="joint" target="left_hand" />
+					<element type="joint" target="right_hand" />
+				</processor>
+				<processor type="direct">
+					<element type="value" value="500" />
+				</processor>
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Custom 3D Points">
+		<mapping>
+			<processor type="distance" min_value="200" max_value="800">
+				<element type="joint" target="left_hand" />
+				<element type="point" porperty="position" x="-530" y="-200" z="1320" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	
+	<mappingset id="Action Processors">
+		<mapping>
+			<processor type="action" action="changeSet" setId="Complex mapping and Booleans">
+				<processor type="boolean" filter="less_than">
+					<element type="joint" target="left_hand" property="position" axis="z" />
+					<element type="value" value="600" />
+				</processor>
+			</processor>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="Feedback">
+		<mapping>
+			<processor type="distance" label="My label for hands distance" min_value="200" max_value="800">
+				<element type="joint" target="left_hand" />
+				<element type="joint" target="right_hand" />
+			</processor>
+		</mapping>
+		
+		<mapping>
+			<processor type="mapped" label="Track Volume">
+				<element type="joint" target="left_hand" property="position" axis="x" />
+			</processor>
+		</mapping>
+	</mappingset>
+	
+</mappings>
