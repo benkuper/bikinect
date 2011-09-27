@@ -10,7 +10,7 @@
 	<dmx active="true" hardware="dmxpro" port="COM5" baudrate="115000" numChannels="512" />
 	
 	<!-- STARTUP -->
-	<startup sendMappings="true" showInfos="true" showHandsCoords="true" showMidiDevices="true" defaultMappingFile="examples/dmx/simple_distance.xml" />
+	<startup sendMappings="true" showInfos="true" showHandsCoords="true" showMidiDevices="true" defaultMappingFile="examples/dmx/distance_toggle.xml" />
 	
 	<!-- KINECT SETTINGS -->
 	<kinect sdk="openni" /> <!-- sdk can be either "openni" or "microsoft" (not implemented yet). -->
