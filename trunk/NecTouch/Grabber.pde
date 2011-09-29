@@ -19,7 +19,6 @@ class Grabber extends PVector
     this.index = index;
     this.x = tx;
     this.y = ty;
-    println("new grabber");
     radius = 10;
     pressed = false;
   }

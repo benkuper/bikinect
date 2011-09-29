@@ -54,7 +54,7 @@ class TouchPoint extends PVector
     pushStyle();
      noFill();
      stroke(c);
-     ellipse(reelCoord.x, reelCoord.y,weight,weight);
+     ellipse(reelCoord.x, reelCoord.y,weight/5,weight/5);
     popStyle();
   }
 }

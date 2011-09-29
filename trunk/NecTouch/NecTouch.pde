@@ -20,11 +20,11 @@ Boolean simActive, simAlreadyActive;
 PVector leftHorizon, rightHorizon, upLPoint, upRPoint;
 
 int numLines = 4;
-int upFactor = 200;
+int upFactor = 80;
 
 Boolean showHelpers, showGrid, showInfos, showDrawingLines, showLabels, showFeedback, maskFloor;
 
-Boolean doCalibrate = false, doMask = false;
+Boolean doCalibrate = false, doMask = false, mirrorMode = false;
 Boolean miniMode;
 
 SimpleOpenNI  context;
@@ -93,15 +93,12 @@ void setup()
   context.enableRGB();
   context.alternativeViewPointDepthToImage();
  
-  if(boolean(xmlKinect.getString("enableRGB")))
-  {
-    enableRGB = true;
-    
-  }
+  enableRGB = boolean(xmlKinect.getString("enableRGB"));
   
   
   
-  if(boolean(xmlKinect.getString("mirror"))) context.setMirror(true);
+  mirrorMode = boolean(xmlKinect.getString("mirror"));
+  context.setMirror(mirrorMode);
   
   
   XMLElement xmlStartup = config.getChild("startup");
@@ -172,7 +169,6 @@ void setup()
   
   touchPoints = new TouchPoint[0];
   
-  
 }
 
 void draw()
@@ -226,33 +222,6 @@ void draw()
   rightHorizon = lineIntersection(gbTL.x, gbTL.y, gbTR.x, gbTR.y, gbBL.x, gbBL.y, gbBR.x, gbBR.y);
   
   PVector upPoint = new PVector(gbBL.x, gbBL.y - upFactor);
-  
-  if(!miniMode)
-  {
-    for (i=0;i<4;i++)
-    {
-      grabbers[i].draw();
-      stroke(255);
-      line(grabbers[i].x, grabbers[i].y, grabbers[(i+1)%4].x, grabbers[(i+1)%4].y);
-    }
-    
-    if (showDrawingLines && !nonLinearMode)
-    {
-      ellipse(leftHorizon.x, leftHorizon.y, 10, 10);
-      ellipse(rightHorizon.x, rightHorizon.y, 10, 10);
-  
-      stroke(200, 150);
-      line(leftHorizon.x, leftHorizon.y, gbBL.x, gbBL.y);
-      line(rightHorizon.x, rightHorizon.y, gbTL.x, gbTL.y);
-      line(leftHorizon.x, leftHorizon.y, gbBR.x, gbBR.y);
-      line(rightHorizon.x, rightHorizon.y, gbBR.x, gbBR.y);
-  
-      line(leftHorizon.x, leftHorizon.y, rightHorizon.x, rightHorizon.y);
-      line(leftHorizon.x, leftHorizon.y, rightHorizon.x, rightHorizon.y);
-    }
-  }
-  
-  
 
   if (rightHorizon != null && leftHorizon != null)
   {
@@ -261,6 +230,22 @@ void draw()
 
     if(!miniMode)
     {
+      
+      if (showDrawingLines && !nonLinearMode)
+      {
+        ellipse(leftHorizon.x, leftHorizon.y, 10, 10);
+        ellipse(rightHorizon.x, rightHorizon.y, 10, 10);
+    
+        stroke(200, 150);
+        line(leftHorizon.x, leftHorizon.y, gbBL.x, gbBL.y);
+        line(rightHorizon.x, rightHorizon.y, gbTL.x, gbTL.y);
+        line(leftHorizon.x, leftHorizon.y, gbBR.x, gbBR.y);
+        line(rightHorizon.x, rightHorizon.y, gbBR.x, gbBR.y);
+    
+        line(leftHorizon.x, leftHorizon.y, rightHorizon.x, rightHorizon.y);
+        line(leftHorizon.x, leftHorizon.y, rightHorizon.x, rightHorizon.y);
+      }
+    
       if (showHelpers && !nonLinearMode)
       {
         drawRepere(leftHorizon, gbBL, gbTL, upPoint, upLPoint);
@@ -273,7 +258,16 @@ void draw()
         drawGrid(rightHorizon, leftHorizon, gbBL, gbBR, gbTL, gbTR);
       }
     }
-      
+    
+    if(!miniMode)
+    {
+      for (i=0;i<4;i++)
+      {
+        grabbers[i].draw();
+        stroke(255);
+        line(grabbers[i].x, grabbers[i].y, grabbers[(i+1)%4].x, grabbers[(i+1)%4].y);
+      }
+    }
     
     
     if (simActive)
@@ -444,7 +438,7 @@ void draw()
     {
       fill(0, 160);
       noStroke();
-      rect(0, 0, 300, 230);
+      rect(0, 0, 300, 310);
   
   
       fill(255);
@@ -453,52 +447,73 @@ void draw()
       text("g : Show / Hide Grid", 10, 30, 200, 20);
       popStyle();
   
-      text("8 / 2 : Increase / Decrease grid density", 10, 50, 250, 20);
+      text("8 / 2 : Increase / Decrease grid densityr", 10, 50, 250, 20);
   
       pushStyle();
       if (showDrawingLines) fill(100, 200, 20);
       text("d : Show / Hide Drawing Lines", 10, 70, 200, 20);
       popStyle();
-  
-  
+      
+      
       pushStyle();
       if (showHelpers) fill(100, 200, 20);
-      text("r : Show / Hide Helpers", 10, 90, 200, 20);
+      text("h : Show / Hide Helpers", 10, 90, 200, 20);
       popStyle();
   
   
       pushStyle();
+      if (enableRGB) fill(100, 200, 20);
+      text("k : Switch RGB / Depth Image mode", 10, 110, 200, 20);
+      popStyle();
+     
+     
+      pushStyle();
+      if (mirrorMode) fill(100, 200, 20);
+      text("r : Toggle Kinect Mirror Mode", 10, 130, 200, 20);
+      popStyle();
+  
+      pushStyle();
       if (showLabels) fill(100, 200, 20);
-      text("l : Show / Hide Labels", 10, 110, 200, 20);
+      text("l : Show / Hide Labels", 10, 150, 200, 20);
       popStyle();
   
       pushStyle();
       if (showFeedback) fill(100, 200, 20);
-      text("f : Show / Hide Feedback", 10, 130, 200, 20);
+      text("f : Show / Hide Feedback", 10, 170, 200, 20);
       popStyle();
   
-      text("c : Calibrate plane", 10, 150, 200, 20);
-  
-      pushStyle();
-      if (doCalibrate) fill(100, 200, 20);
-      text("p : Toggle permanent calibration", 10, 170, 250, 20);
-      popStyle();
+      text("c : Calibrate plane", 10, 190, 200, 20);
   
       pushStyle();
       if (doMask) fill(100, 200, 20);
-      text("m : Toggle plane mask mode", 10, 190, 250, 20);
+      text("m : Toggle plane mask mode", 10, 210, 250, 20);
+      popStyle();
+      
+      pushStyle();
+      if (swapXY) fill(100, 200, 20);
+      text("w : Toggle swapXY", 10, 230, 250, 20);
+      popStyle();
+      
+      pushStyle();
+      if (invertX) fill(100, 200, 20);
+      text("x : Toggle invertX", 10, 250, 250, 20);
+      popStyle();
+      
+      pushStyle();
+      if (invertY) fill(100, 200, 20);
+      text("y : Toggle invertY", 10, 270, 250, 20);
       popStyle();
   
-      text("s : Save settings", 10, 210, 250, 20);
+      text("s : Save settings", 10, 290, 250, 20);
   
       pushStyle();
       fill(0, 160);
-      rect(0, height-40, 300, 40);
+      rect(0, height-40, width, 40);
   
   
       fill(255);
-      text("Min / Max diff ((Ctrl or Shift) & '+' / '-') : "+minDiff+" -> "+maxDiff, 10, height-35, 300, 20);
-      text("Min / Max blob size ((Alt or Nothing) & '+' / '-') : "+minBlobWeight+" -> "+maxBlobWeight, 10, height-15, 390, 20);
+      text("Min / Max diff ((Ctrl or Shift) & '+' / '-') : "+minDiff+" -> "+maxDiff, 10, height-35, 400, 20);
+      text("Min / Max blob size ((Alt or Nothing) & '+' / '-') : "+minBlobWeight+" -> "+maxBlobWeight, 10, height-15, 450, 20);
       popStyle() ;
     }
     text("'i' - Show / Hide infos", 10, 10, 200, 20);
@@ -530,20 +545,22 @@ void drawGrid(PVector firstHorizon, PVector secondHorizon, PVector longPoint, PV
   
     stroke(130, 250);
     PVector upPoint = new PVector(midPoint.x, midPoint.y-numLines);
-    for (int i=0;i<numLines;i++)
+    
+    for (int i=1;i<numLines;i++)
     {
       PVector diagIntersect = lineIntersection(longPoint.x, longPoint.y, upPoint.x, upPoint.y, firstHorizon.x, firstHorizon.y, midPoint.x, midPoint.y + (upPoint.y-midPoint.y)*i/numLines);
       if (diagIntersect == null) break;
       PVector targetEnd = lineIntersection(diagIntersect.x, diagIntersect.y, diagIntersect.x, diagIntersect.y+1, firstHorizon.x, firstHorizon.y, longPoint.x, longPoint.y);
       if (targetEnd == null) break;
       PVector targetBegin = lineIntersection(targetEnd.x, targetEnd.y, secondHorizon.x, secondHorizon.y, sideFirstPoint.x, sideFirstPoint.y, sideSecondPoint.x, sideSecondPoint.y);
-  
+    
       line(targetEnd.x, targetEnd.y, targetBegin.x, targetBegin.y);
     }
     
   }else
   {
-    for(int i=0;i<numLines;i++)
+    stroke(200,100);
+    for(int i=1;i<numLines;i++)
     {
       PVector h1 = new PVector(gbTL.x + i*(gbTR.x-gbTL.x) / numLines, gbTL.y + i* (gbTR.y-gbTL.y) / numLines);
       PVector h2 = new PVector(gbBL.x + i*(gbBR.x-gbBL.x) / numLines, gbBL.y + i*(gbBR.y-gbBL.y) / numLines);
@@ -551,12 +568,12 @@ void drawGrid(PVector firstHorizon, PVector secondHorizon, PVector longPoint, PV
       PVector v1 = new PVector(gbTL.x + i* (gbBL.x-gbTL.x) / numLines, gbTL.y + i*(gbBL.y-gbTL.y) / numLines);
       PVector v2 = new PVector(gbTR.x + i* (gbBR.x-gbTR.x) / numLines, gbTR.y + i*(gbBR.y-gbTR.y) / numLines);
       
-        if(v1.x > v2.x || h1.y > h2.y)
+      /*if(v1.x > v2.x || h1.y > h2.y)
       {
         stroke(200,50,50,100);
       }else{
         stroke(200,100);
-      }
+      }*/
       
       line(h1.x,h1.y,h2.x,h2.y);
       line(v1.x,v1.y,v2.x,v2.y);
@@ -589,13 +606,14 @@ float calculatePerspCoord(PVector firstHorizon, PVector secondHorizon, PVector s
 {
 
   PVector bIntersect = lineIntersection(firstHorizon.x, firstHorizon.y, simPoint.x, simPoint.y, firstPoint.x, firstPoint.y, secondPoint.x, secondPoint.y);
-
-  if (PVector.dist(secondHorizon, bIntersect) > PVector.dist(secondHorizon, firstPoint)) {
+  
+  float maxLineDist = PVector.dist(firstPoint,secondPoint);
+  if (PVector.dist(bIntersect, firstPoint) > maxLineDist) {
     //todo stop sending here if clip stops
-    bIntersect = firstPoint;
-  }
-  else if (PVector.dist(secondHorizon, bIntersect) < PVector.dist(secondHorizon, secondPoint)) {
     bIntersect = secondPoint;
+  }
+  else if (PVector.dist(bIntersect, secondPoint) > maxLineDist) {
+    bIntersect = firstPoint;
   }
   
   if(upPoint == null) return 0;
@@ -625,7 +643,7 @@ float calculatePerspCoord(PVector firstHorizon, PVector secondHorizon, PVector s
   }
   else
   {
-    PVector closerIntersect = lineIntersection(firstHorizon, simPoint, sideFirstPoint, sideSecondPoint);
+    PVector closerIntersect = lineIntersection(firstHorizon, bIntersect, sideFirstPoint, sideSecondPoint);
     line(closerIntersect.x, closerIntersect.y, bIntersect.x, bIntersect.y);
   }
 
@@ -960,12 +978,28 @@ void saveConfig()
     config.getChild("grabbers").getChild(i).setInt("y",(int)grabbers[i].y);
   }
   
+  
+  
   config.getChild("detection").setInt("minDistance",minDiff);
   config.getChild("detection").setInt("maxDistance",maxDiff);
   config.getChild("detection").setInt("minBlobSize",minBlobWeight);
   config.getChild("detection").setInt("maxBlobSize",maxBlobWeight);
   
   config.getChild("startup").setString("miniMode",miniMode.toString());
+  config.getChild("startup").setString("showHelpers", showHelpers.toString());
+  config.getChild("startup").setString("showGrid", showGrid.toString());
+  config.getChild("startup").setString("showInfos", showInfos.toString());
+  config.getChild("startup").setString("showDrawingLines", showDrawingLines.toString());
+  config.getChild("startup").setString("showFeedback", showFeedback.toString());
+  config.getChild("startup").setString("showLabels", showLabels.toString());
+  config.getChild("startup").setString("autoCalibrate",autoCalibrate.toString());
+  
+  config.getChild("kinect").setString("mirror",mirrorMode.toString());
+  config.getChild("kinect").setString("enableRGB",enableRGB.toString());
+   
+  config.getChild("detection").setString("invertX",invertX.toString());
+  config.getChild("detection").setString("invertY",invertY.toString());
+  config.getChild("detection").setString("swapXY",swapXY.toString());
   
   println(config.toString());
   config.save("data/config.xml");
@@ -1056,8 +1090,25 @@ void keyPressed(KeyEvent e)
     calibratePlane();
     break;
     
-  case 'r':
+  case 'k':
     enableRGB = !enableRGB;
+    break;
+    
+  case 'r':
+    mirrorMode = !mirrorMode;
+    context.setMirror(mirrorMode);
+    break;
+    
+  case 'w':
+    swapXY = !swapXY;
+    break;
+    
+  case 'x':
+    invertX = !invertX;
+    break;
+    
+  case 'y':
+    invertY = !invertY;
     break;
     
   case 's':
