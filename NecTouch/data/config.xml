@@ -2,14 +2,14 @@
 <data>
   <window width="800" height="600" resizable="true" offsetX="100" offsetY="100"/>
   <grabbers>
-    <grabber id="tl" label="Top Left" x="157" y="371"/>
-    <grabber id="tr" label="Top Right" x="443" y="298"/>
-    <grabber id="br" label="Bottom Right" x="607" y="376"/>
-    <grabber id="bl" label="Bottom Left" x="186" y="537"/>
+    <grabber id="tl" label="Origin" x="308" y="48"/>
+    <grabber id="tr" label="X axis" x="533" y="126"/>
+    <grabber id="br" label="Corner" x="503" y="394"/>
+    <grabber id="bl" label="Y axis" x="155" y="353"/>
   </grabbers>
-  <startup showHelpers="false" showInfos="true" showGrid="true" showDrawingLines="false" showLabels="true" showFeedback="true" miniMode="false" autoCalibrate="false"/>
+  <startup showHelpers="false" showInfos="false" showGrid="true" showDrawingLines="false" showLabels="true" showFeedback="true" miniMode="false" autoCalibrate="false"/>
   <feedback width="200" height="150"/>
-  <kinect mirror="true" enableRGB="true"/>
-  <detection minDistance="15" maxDistance="29" minBlobSize="36" maxBlobSize="800" swapXY="false" invertX="false" invertY="true" nonLinear="false"/>
+  <kinect mirror="false" enableRGB="true"/>
+  <detection minDistance="15" maxDistance="29" minBlobSize="36" maxBlobSize="800" swapXY="false" invertX="false" invertY="false" nonLinear="false"/>
   <tuio address="127.0.0.1" port="3333"/>
 </data>
