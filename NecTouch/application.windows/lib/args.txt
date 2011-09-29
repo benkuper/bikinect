@@ -1,3 +1,0 @@
-
-NecTouch
-NecTouch.jar,core.jar,oscP5.jar,SimpleOpenNI.jar,OpenCV.jar
