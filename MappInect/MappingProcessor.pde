@@ -61,6 +61,12 @@ class MappingProcessor implements IRawValueProvider
     minValue = -500;
     maxValue = 500;
     
+    if(axis == Tokens.Z)
+    {
+      minValue = 1000;
+      maxValue = 2000;
+    }
+    
     this.filter = Tokens.getIndexForToken(Tokens.processorFiltersToken, _filter);
     
    
@@ -69,7 +75,7 @@ class MappingProcessor implements IRawValueProvider
     }else{
        this.effect = Tokens.getIndexForToken(Tokens.processorEffectsToken, _effect);
     }
-    
+     
     switch(type){
       case Tokens.BOOLEAN:
       case Tokens.CONDITIONNAL:
