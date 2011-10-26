@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<mappings>
+	<mappingset>
+		<mapping id="set">
+			<processor type="filtered" label="Z" filter="gate" inactive="standby" >
+				<processor type="mapped" >
+					<element type="joint" target="right_hand" property="position" axis="z" />
+				</processor>
+				
+				<processor type="boolean" filter="less_than">
+					<element type="joint" target="right_hand" property="position" axis="y" />
+					<element type="value" value="200" />
+				</processor>
+			</processor>
+			<output>
+				
+			</output>
+		</mapping>
+		
+		<mapping id="set2">
+			<processor type="mapped">
+				<element type="joint" target="left_hand" property="position" axis="x" />
+			</processor>
+			<output>
+				
+			</output>
+		</mapping>
+	</mappingset>
+</mappings>

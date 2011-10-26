@@ -50,6 +50,7 @@ class MappingProcessor implements IRawValueProvider
     this.label = _label;
     this.showFeedback = _showFeedback;
     this.labelFeedback = (label.equals(""))?false:_labelFeedback;
+   
     this.axis = Tokens.getIndexForToken(Tokens.axisToken,_axis);
     this.type = Tokens.getIndexForToken(Tokens.processorTypesToken, _type);
     this.inactive = Tokens.getIndexForToken(Tokens.processorInactiveToken, _inactive);
@@ -61,6 +62,8 @@ class MappingProcessor implements IRawValueProvider
     minValue = -500;
     maxValue = 500;
     
+    
+    
     this.filter = Tokens.getIndexForToken(Tokens.processorFiltersToken, _filter);
     
    
@@ -69,7 +72,7 @@ class MappingProcessor implements IRawValueProvider
     }else{
        this.effect = Tokens.getIndexForToken(Tokens.processorEffectsToken, _effect);
     }
-    
+     
     switch(type){
       case Tokens.BOOLEAN:
       case Tokens.CONDITIONNAL:
@@ -92,8 +95,8 @@ class MappingProcessor implements IRawValueProvider
     }
     
     
-    
     this.overflow = Tokens.getIndexForToken(Tokens.processorOverflowsToken, _overflow);
+    
     
     println(" * New MappingProcessor : type: "+type+", filter: "+filter+", isBoolean :"+isBoolean+", effect :"+effect+", showFeedback :"+showFeedback+",labelFeedback:"+labelFeedback+", inactive ="+inactive);
   }
@@ -172,7 +175,7 @@ class MappingProcessor implements IRawValueProvider
     
     return values;
   }
-
+  
   public float getRawValue()
   {
     float rawValue = 0;  
@@ -234,10 +237,11 @@ class MappingProcessor implements IRawValueProvider
         
       case Tokens.NONE:
         //no overflow handling
+        println("no Overflow");
         break;
         
       default:
-        print("## MappingProcessor => overflow not handled : "+overflow);
+        println("## MappingProcessor => overflow not handled : "+overflow);
         break;
     }
     
@@ -467,7 +471,7 @@ class MappingProcessor implements IRawValueProvider
         vectors[i] = new PVector();
        
         context.convertRealWorldToProjective(rawVector,vectors[i]);
-         println("*** Feedback vector "+vectors[i]);
+         //println("*** Feedback vector "+vectors[i]);
       }
     }
     
@@ -527,6 +531,13 @@ class MappingProcessor implements IRawValueProvider
     isGroup = value;
     providers = isGroup?processors:elements;
     numProviders = providers.length;
+    
+    //Hack for default Min/Max values
+    if(getAxis() == Tokens.Z && minValue < 0)
+    {
+      minValue = 1000;
+      maxValue = 2000;
+    }
   }
  
 }

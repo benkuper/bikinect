@@ -63,6 +63,13 @@ public class MappingManager
       this.currentFile = file;
     }
     
+    File f = new File(dataPath(file));
+    if (!f.exists()) {
+      text("mapping file  not found : "+file,10,10,400,20);
+      criticalStop = true;
+      return;
+   } 
+  
     xml = new XMLElement(parent, file);
     
     
@@ -183,6 +190,7 @@ public class MappingManager
     
     MappingProcessor p = new MappingProcessor(id, label,showFeedback, labelFeedback, type, filter, operator, overflow,effect, axis, action, inactive);
     
+    
     if(minValue != -5555){
       p.minValue = minValue;
     }
@@ -223,6 +231,7 @@ public class MappingManager
 
   MappingElement readXMLElement(XMLElement xmlElem, MappingProcessor parentProcessor) {
     String elemType = xmlElem.getString("type");
+    int elemUserId = xmlElem.getInt("userId",0);
     String elemTarget = xmlElem.getString("target");
     String elemProperty = xmlElem.getString("property", "position");
     
@@ -231,7 +240,7 @@ public class MappingManager
     
     int elemValue = xmlElem.getInt("value", 0);
     PVector position = new PVector(xmlElem.getInt("x", 0),xmlElem.getInt("y", 0),xmlElem.getInt("z", 0));
-    return new MappingElement(elemType, elemTarget, elemProperty, elemAxis, elemValue,position);
+    return new MappingElement(elemType, elemUserId, elemTarget, elemProperty, elemAxis, elemValue,position);
   }
   
   
@@ -266,8 +275,13 @@ public class MappingManager
         String oscAddress = xmlOutput.getString("address","");
         int oscPort = xmlOutput.getInt("port",oscDefaultOutPort);
         output = new MappingOSCOutput(oscHost,oscPort,oscAddressPrefix+oscAddress);
+        
       }else if(outputType.equals("dmx")){
-        output = new MappingDMXOutput();
+        int startChannel = xmlOutput.getInt("startChannel",1);
+        int minOut = xmlOutput.getInt("minOut",0);
+        int maxOut = xmlOutput.getInt("maxOut",255);
+        output = new MappingDMXOutput(startChannel, minOut, maxOut);
+        
       }else{
         output = null;
       }

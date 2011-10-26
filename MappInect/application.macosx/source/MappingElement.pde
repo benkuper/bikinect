@@ -6,11 +6,12 @@ class MappingElement implements IRawValueProvider
   public int axis;
   public int value;
   public PVector position;
-  
+  public int userId; 
+ 
   //Internal
   public Boolean isVector;
   
-  public MappingElement(String _type, String _target, String _property, String _axis, int _value, PVector _position)
+  public MappingElement(String _type, int _userId, String _target, String _property, String _axis, int _value, PVector _position)
   {
     this.type = Tokens.getIndexForToken(Tokens.mappingElementTypesToken,_type);
     
@@ -31,7 +32,7 @@ class MappingElement implements IRawValueProvider
     this.axis = Tokens.getIndexForToken(Tokens.axisToken,_axis);
     this.value = _value;
     this.position = _position;
-    
+    this.userId = _userId;
     
     println(" * New MappingElement : type: "+type+", target: "+target+", property: "+property+", axis :"+axis+", value:"+value+", position : "+position+", isVector :"+isVector);
   }
@@ -43,6 +44,8 @@ class MappingElement implements IRawValueProvider
   
   public float getRawValue()
   {
+    
+    
     switch(type){
       case Tokens.POINT:
         return 0;
@@ -51,7 +54,7 @@ class MappingElement implements IRawValueProvider
         return value;
       
       case Tokens.JOINT:
-        return getJointValue(trackedUsers[numUsers-1], target, axis);
+        return getJointValue(getTargetUser(), target, axis);
     }
     
     println("## MappingElement => getDirectValue : type not handled -> "+type);
@@ -70,12 +73,17 @@ class MappingElement implements IRawValueProvider
         return null;
       
       case Tokens.JOINT:
-        return getJoint(trackedUsers[numUsers-1], target);
+        return getJoint(getTargetUser(), target);
 
     }
     
     println("## MappingElement => getDirectValue : type not handled -> "+type);
     return null;
+  }
+  
+  public int getTargetUser()
+  {
+    return (userId < 1 || userId >= numUsers)?trackedUsers[numUsers-1]:trackedUsers[userId-1];
   }
 }
 

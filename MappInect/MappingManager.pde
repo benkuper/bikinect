@@ -190,6 +190,7 @@ public class MappingManager
     
     MappingProcessor p = new MappingProcessor(id, label,showFeedback, labelFeedback, type, filter, operator, overflow,effect, axis, action, inactive);
     
+    
     if(minValue != -5555){
       p.minValue = minValue;
     }
