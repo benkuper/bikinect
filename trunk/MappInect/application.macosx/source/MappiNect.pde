@@ -1,3 +1,5 @@
+
+
 /* --------------------------------------------------------------------------
  * SimpleOpenNI User Test
  * --------------------------------------------------------------------------
@@ -11,6 +13,8 @@
 
 import SimpleOpenNI.*;
 import rwmidi.*;
+import dmxP512.*;
+import processing.serial.*;
 
 import oscP5.*;
 import netP5.*;
@@ -22,6 +26,10 @@ MidiOutput output;
 
 OscP5 oscP5;
 NetAddress oscRemoteHost;
+
+DmxP512 dmxOutput;
+
+Boolean criticalStop;
 
 Boolean showInfos;
 Boolean sendMappings;
@@ -56,15 +64,20 @@ MappingManager manager;
 void setup()
 {
   background(0, 0, 0);
-
+  
   stroke(0, 0, 255);
   strokeWeight(3);
   smooth();
   
-  devices =  RWMidi.getOutputDevices();
+  
   
   readSettings();
-
+  
+  if(criticalStop)
+  {
+    return;
+  }
+  
   context = new SimpleOpenNI(this);
 
   // enable depthMap generation
@@ -99,20 +112,50 @@ void setup()
 
 void readSettings()
 {
+  criticalStop = false;
+  
+  File f = new File(dataPath("config.xml"));
+  
+  if (!f.exists()) {
+    size(300,40);
+    text("config.xml not found in data folder.",10,10,300,20);
+    criticalStop = true;
+    return;
+  } 
+
   XMLElement config = new XMLElement(this,"config.xml");
   
   XMLElement midiConfig = config.getChild("midi");
-  setMidiOutDevice(midiConfig.getInt("outDeviceID"));
+  if(boolean(midiConfig.getString("active")))
+  {
+    devices =  RWMidi.getOutputDevices();
+    setMidiOutDevice(midiConfig.getInt("outDeviceID"));
+  }
+  
   
   XMLElement oscConfig = config.getChild("osc");
-  oscDefaultInPort = oscConfig.getInt("inPort",4000);
-  oscDefaultOutPort = oscConfig.getInt("outPort",4444);
-  oscDefaultHost = oscConfig.getString("host","127.0.0.1");
-  oscAddressPrefix = oscConfig.getString("addressPrefix","");
-  oscP5 = new OscP5(this,oscDefaultInPort);
-  oscRemoteHost = new NetAddress(oscDefaultHost,oscDefaultOutPort);
+  if(boolean(oscConfig.getString("active")))
+  {
+    oscDefaultInPort = oscConfig.getInt("inPort",4000);
+    oscDefaultOutPort = oscConfig.getInt("outPort",4444);
+    oscDefaultHost = oscConfig.getString("host","127.0.0.1");
+    oscAddressPrefix = oscConfig.getString("addressPrefix","");
+    oscP5 = new OscP5(this,oscDefaultInPort);
+    oscRemoteHost = new NetAddress(oscDefaultHost,oscDefaultOutPort);
+  }
   
-   
+  XMLElement dmxConfig = config.getChild("dmx");
+  if(boolean(dmxConfig.getString("active")))
+  {
+    dmxOutput = new DmxP512(this,dmxConfig.getInt("numChannels",512),false);
+    String dmxHardware = dmxConfig.getString("hardware");
+    if(dmxHardware.equals("dmxpro"))
+    {
+      String dmxPort = dmxConfig.getString("port");
+      int dmxBaudrate = dmxConfig.getInt("baudrate");
+      dmxOutput.setupDmxPro(dmxPort, dmxBaudrate);
+    }
+  }
   
   println("Settings loaded :");
   println(" -> midiOutputDeviceID :"+midiOutDeviceID);
@@ -135,8 +178,9 @@ void readSettings()
 
 void draw()
 {
-
+  if(criticalStop) return;
   background(0);
+  
   
   // update the cam
   context.update();
@@ -194,11 +238,11 @@ void showInfos() {
   
  
   
-  if(showHandsCoords)
+  if(showHandsCoords && trackedUsers.length > 0)
   {
-    PVector leftHand = getJoint(1, SimpleOpenNI.SKEL_LEFT_HAND);
+    PVector leftHand = getJoint(trackedUsers[trackedUsers.length-1], SimpleOpenNI.SKEL_LEFT_HAND);
     text("Left Hand => x : "+int(leftHand.x)+", y : "+int(leftHand.y)+", z : "+int(leftHand.z)+" (hit 'h' to hide)",10,60,350,20);
-    PVector rightHand = getJoint(1, SimpleOpenNI.SKEL_RIGHT_HAND);
+    PVector rightHand = getJoint(trackedUsers[trackedUsers.length-1], SimpleOpenNI.SKEL_RIGHT_HAND);
     text("Right Hand => x : "+int(rightHand.x)+", y : "+int(rightHand.y)+", z : "+int(rightHand.z)+" (hit 'h' to hide)",10,80,350,20);
   }
   
