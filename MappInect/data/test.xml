@@ -1,0 +1,19 @@
+<mappings>
+	<mappingset>
+		<mapping label="piededestro">	
+				<processor type="boolean" filter="greater_than" label="piede_dx">
+					<processor type="filtered" filter="minus" overflow="none" >
+						<element type="joint" target="left_hand" property="position" axis="z" />
+						<element type="joint" target="right_hand" property="position" axis="z" />
+					</processor>	
+					<processor type="direct">
+						<element type="value" value="300" />
+					</processor>	
+				</processor>
+				
+				<output>
+					<midi type="note" device="0" channel="1" channelMap="1" velocityMap="0" minChannel="63" maxChannel="68" minVelocity="0" maxVelocity="127" distinctNotes="true" />
+				</output>
+		</mapping>	
+	</mappingset>
+</mappings>
