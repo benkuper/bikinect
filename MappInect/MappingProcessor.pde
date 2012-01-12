@@ -304,12 +304,14 @@ class MappingProcessor implements IRawValueProvider
 
   public Boolean getBooleanFilterValue()
   {
+   
     float rawValue = providers[0].getRawValue();
     float refValue = providers[1].getRawValue();
     
     Boolean result = false;
     switch(filter){
       case Tokens.GREATER_THAN:
+        println("rawValue :"+rawValue+"/refValue:"+refValue);
         result = (rawValue > refValue);
         break;
       case Tokens.LESS_THAN:
@@ -448,8 +450,11 @@ class MappingProcessor implements IRawValueProvider
         break;
      
       case Tokens.MINUS:
+        println("first value :"+filteredValue);
         for(int i=1;i<numProviders;i++){
+          println("next Value :"+providers[i].getRawValue());
           filteredValue -= providers[i].getRawValue();
+          println("result value :"+filteredValue);
         }
         
         break;
@@ -547,11 +552,11 @@ class MappingProcessor implements IRawValueProvider
     numProviders = providers.length;
     
     //Hack for default Min/Max values
-    if(getAxis() == Tokens.Z && minValue < 0)
+    /*if(getAxis() == Tokens.Z && minValue < 0)
     {
       minValue = 1000;
       maxValue = 2000;
-    }
+    }*/
   }
  
 }
