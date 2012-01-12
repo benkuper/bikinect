@@ -3,7 +3,7 @@
 	<mappingset>
 		<mapping id="set">
 			<processor type="filtered" label="Z" filter="gate" inactive="standby" >
-				<processor type="mapped" >
+				<processor type="mapped">
 					<element type="joint" target="right_hand" property="position" axis="z" />
 				</processor>
 				

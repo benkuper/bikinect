@@ -1,3 +1,0 @@
-
-MappiNect
-MappiNect.jar,core.jar,SimpleOpenNI.jar,rwmidi.jar,oscP5.jar

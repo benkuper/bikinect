@@ -440,6 +440,20 @@ class MappingProcessor implements IRawValueProvider
         filteredValue /= numProviders;
         break;
         
+      case Tokens.SUM:
+        for(int i=1;i<numProviders;i++){
+          filteredValue += providers[i].getRawValue();
+        }
+        
+        break;
+     
+      case Tokens.MINUS:
+        for(int i=1;i<numProviders;i++){
+          filteredValue -= providers[i].getRawValue();
+        }
+        
+        break;
+        
       default:
         print("MappingProcessor => getFilteredFilterValue, filter not handled "+filter);
         return 0;
