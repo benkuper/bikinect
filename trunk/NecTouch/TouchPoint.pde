@@ -12,6 +12,7 @@ class TouchPoint extends PVector
   
   PVector reelCoord;
   
+  
   public TouchPoint(float tx, float ty, float tweight, PVector reelCoordVec, boolean isLast)
   {
 

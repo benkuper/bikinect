@@ -1,15 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <data>
   <window width="800" height="600" resizable="true" offsetX="100" offsetY="100"/>
-  <grabbers>
-    <grabber id="tl" label="Origin" x="59" y="284"/>
-    <grabber id="tr" label="X axis" x="193" y="288"/>
-    <grabber id="br" label="Corner" x="422" y="417"/>
-    <grabber id="bl" label="Y axis" x="36" y="458"/>
-  </grabbers>
-  <startup showHelpers="false" showInfos="false" showGrid="true" showDrawingLines="false" showLabels="true" showFeedback="true" miniMode="false" autoCalibrate="false"/>
+  <startup showHelpers="false" showInfos="false" showGrid="false" showDrawingLines="false" showLabels="true" showFeedback="true" miniMode="false" autoCalibrate="false" showIds="true"/>
   <feedback width="160" height="100"/>
-  <kinect mirror="false" enableRGB="true"/>
-  <detection minDistance="7" maxDistance="75" minBlobSize="9" maxBlobSize="85" swapXY="false" invertX="false" invertY="false" nonLinear="false"/>
+  <kinect mirror="false" enableRGB="false"/>
+  <detection minDistance="21" maxDistance="63" minBlobSize="56" maxBlobSize="436" swapXY="false" invertX="false" invertY="false"/>
   <tuio address="127.0.0.1" port="3333"/>
+  <surfaces>
+    <surface type="plane" nonLinear="false">
+      <grabber id="tl" label="Origin" x="445" y="264"/>
+      <grabber id="tr" label="X axis" x="545" y="266"/>
+      <grabber id="br" label="Corner" x="539" y="444"/>
+      <grabber id="bl" label="Y axis" x="436" y="446"/>
+    </surface>
+    <surface type="plane" nonLinear="false">
+      <grabber id="tl" label="Origin" x="240" y="268"/>
+      <grabber id="tr" label="X axis" x="436" y="278"/>
+      <grabber id="br" label="Corner" x="423" y="460"/>
+      <grabber id="bl" label="Y axis" x="237" y="442"/>
+    </surface>
+    <surface type="plane" nonLinear="false">
+      <grabber id="tl" label="Origin" x="267" y="78"/>
+      <grabber id="tr" label="X axis" x="446" y="77"/>
+      <grabber id="br" label="Corner" x="442" y="239"/>
+      <grabber id="bl" label="Y axis" x="267" y="228"/>
+    </surface>
+  </surfaces>
 </data>

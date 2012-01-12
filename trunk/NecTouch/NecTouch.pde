@@ -1,3 +1,5 @@
+import processing.opengl.*;
+
 import oscP5.*;
 import netP5.*;
 import SimpleOpenNI.*;
@@ -8,36 +10,36 @@ import controlP5.*;
 
 
 ControlP5 controlP5;
-
-Grabber gbTL;
-Grabber gbTR;
-Grabber gbBL;
-Grabber gbBR;
-
-Grabber[] grabbers;
 Feedback feedback;
 TUIOServer tuioServer;
+OpenCV cv;
+TouchSurface[] surfaces;
 
-TouchPoint simPoint;
-boolean simActive, simAlreadyActive;
+TouchSurface activeSurface;
+ControlGroup surfaceControl;
 
+boolean criticalStop;
+XMLElement config;
 
-PVector leftHorizon, rightHorizon, upLPoint, upRPoint;
+color[] colors = {
+  color(255, 0, 0), color(0, 255, 0), color(20, 100, 255), color(255, 255, 50), color(255, 0, 255), color(0, 255, 255)
+};
 
 int gridLines = 4;
-int upFactor = 80;
+int upFactor = 20;
 
-boolean showHelpers, showGrid, showInfos, showDrawingLines, showLabels, showFeedback, maskFloor;
+boolean showHelpers, showGrid, showInfos, showDrawingLines, showLabels, showFeedback, maskFloor, showIds;
 
 boolean doCalibrate = false, doMask = false, mirrorMode = false;
 boolean miniMode;
+boolean autoCalibrate;
 
 SimpleOpenNI  context;
 boolean enableRGB;
 
-int[] planePixels, planeDepthPixels, planeDepthMap;
-
-int imageWidth, imageHeight, pixelsLength, planePixelsLength;
+int imageWidth, imageHeight, pixelsLength;
+int[] depthMap;
+PImage kinectImage;
 
 PVector mainOffset;
 boolean offsetting;
@@ -45,31 +47,13 @@ PVector tmpMouseOffset, tmpInitOffset;
 
 boolean invertX, invertY,swapXY;
 
-boolean nonLinearMode;
-
-PGraphics planeMask;
-
 int minDistance, maxDistance, minBlobSize, maxBlobSize;
-
-PImage blobsImage;
-//Detector bd;
-OpenCV cv;
-
-int goodBlobsNumber, rawBlobsNumber;
-
-TouchPoint[] touchPoints;
 
 static int globalTouchPointIndex;
 
-color[] colors = {
-  color(255, 0, 0), color(0, 255, 0), color(20, 100, 255), color(255, 255, 50), color(255, 0, 255), color(0, 255, 255)
-};
+int numSurfaces;
 
-boolean criticalStop;
-
-XMLElement config;
-
-boolean autoCalibrate;
+Toggle nLToggle;
 
 void setup()
 {
@@ -111,6 +95,7 @@ void setup()
   showGrid = boolean(xmlStartup.getString("showGrid", "true"));
   //showInfos = boolean(xmlStartup.getString("showInfos", "true"));
   //showDrawingLines = boolean(xmlStartup.getString("showDrawingLines", "true"));
+  showIds = boolean(xmlStartup.getString("showIds", "true"));
   showFeedback = boolean(xmlStartup.getString("showFeedback", "true"));
   showLabels = boolean(xmlStartup.getString("showLabels", "true"));
   miniMode = boolean(xmlStartup.getString("miniMode","true")); 
@@ -129,36 +114,38 @@ void setup()
   smooth();
 
 
+  imageWidth = context.depthWidth();
+  imageHeight = context.depthHeight();
+  pixelsLength = imageWidth * imageHeight;
 
-  XMLElement xmlGrabbers = config.getChild("grabbers");
-  gbTL = new Grabber(0, xmlGrabbers.getChild(0).getString("label", ""), xmlGrabbers.getChild(0).getInt("x", 50), xmlGrabbers.getChild(0).getInt("y", 50));
-  gbTR = new Grabber(1, xmlGrabbers.getChild(1).getString("label", ""), xmlGrabbers.getChild(1).getInt("x", 250), xmlGrabbers.getChild(1).getInt("y", 50));
-  gbBR  =new Grabber(2, xmlGrabbers.getChild(2).getString("label", ""), xmlGrabbers.getChild(2).getInt("x", 250), xmlGrabbers.getChild(2).getInt("y", 200));
-  gbBL = new Grabber(3, xmlGrabbers.getChild(3).getString("label", ""), xmlGrabbers.getChild(3).getInt("x", 50), xmlGrabbers.getChild(3).getInt("y", 200));
-
-  grabbers = new Grabber[4];
-  grabbers[0] = gbTL;
-  grabbers[1] = gbTR;
-  grabbers[2] = gbBR;
-  grabbers[3] = gbBL;
+  XMLElement[] xmlSurfaces = config.getChild("surfaces").getChildren();
+  //To change
+  numSurfaces = xmlSurfaces.length;
+  surfaces = new TouchSurface[numSurfaces];
+  for(int i=0;i<numSurfaces;i++)
+  {
+    TouchSurface ts = null;
+    if(xmlSurfaces[i].getString("type","plane").equals("plane"))
+    {
+      ts = new TouchPlane();
+    }else if(xmlSurfaces[i].getString("type","plane").equals("button"))
+    {
+      ts = new TouchButton();
+    }
+    
+    ts.setupSurface(xmlSurfaces[i]);
+    surfaces[i] = ts;
+  }
   
   
-  maskFloor = false;
-
-  simActive = false;
-  simAlreadyActive = false;
-
   XMLElement xmlFeedback = config.getChild("feedback");
   feedback = new Feedback(xmlFeedback.getInt("width", 100), xmlFeedback.getInt("height", 100));
 
   XMLElement xmlTuio = config.getChild("tuio");
   tuioServer = new TUIOServer(xmlTuio.getString("host", "127.0.0.1"), xmlTuio.getInt("port", 3333));
 
-  imageWidth = context.depthWidth();
-  imageHeight = context.depthHeight();
-  pixelsLength = imageWidth * imageHeight;
-
-  planeMask = createGraphics(imageWidth, imageHeight, P2D);
+  
+  
   
   XMLElement xmlDetection = config.getChild("detection");
 
@@ -166,7 +153,7 @@ void setup()
   maxDistance = xmlDetection.getInt("maxDistance");
   minBlobSize = xmlDetection.getInt("minBlobSize");
   maxBlobSize = xmlDetection.getInt("maxBlobSize");
-  nonLinearMode = boolean(xmlDetection.getString("nonLinear"));
+ 
   
   cv = new OpenCV(this);
   cv.allocate(imageWidth,imageHeight);
@@ -174,9 +161,6 @@ void setup()
   invertX =  boolean(xmlDetection.getString("invertX", "false"));
   invertY =  boolean(xmlDetection.getString("invertY", "false"));
   swapXY =  boolean(xmlDetection.getString("swapXY", "false"));
-  
-  touchPoints = new TouchPoint[0];
-  
   
   controlP5 = new ControlP5(this);
   controlP5.tab("miniMode");
@@ -188,9 +172,10 @@ void setup()
   controlP5.addToggle("showGrid",showGrid,10,30,10,10).captionLabel().style().margin(-12,0,0,15);
   controlP5.addToggle("showFeedback",showFeedback,10,45,10,10).captionLabel().style().margin(-12,0,0,15);
   controlP5.addToggle("showLabels",showLabels,10,60,10,10).captionLabel().style().margin(-12,0,0,15);
+  controlP5.addToggle("showIds",showIds,10,75,10,10).captionLabel().style().margin(-12,0,0,15);
   
   
-  Radio r = controlP5.addRadio("enableRGB",100,30);
+  Radio r = controlP5.addRadio("enableRGB",130,60);
   r.deactivateAll(); // use deactiveAll to not make the first radio button active.
   
   r.add("RGB",1);
@@ -205,7 +190,12 @@ void setup()
     r.activate("Depth");
   }
   
-  controlP5.addBang("calibratePlane",100,70,20,20).captionLabel().style().margin(-17,0,0,25);
+  Slider s1 = controlP5.addSlider("gridLines",0,20,10,90,60,10);
+  s1.setNumberOfTickMarks(20);
+  
+  Bang b = controlP5.addBang("calibrateSurfaces",130,30,20,20);
+  b.captionLabel().style().margin(-17,0,0,25);
+  b.setLabel("Calibrate");
   
   controlP5.addToggle("mirrorMode",mirrorMode,220,10,10,10).captionLabel().style().margin(-12,0,0,15);
   controlP5.addToggle("doMask",doMask,220,25,10,10).captionLabel().style().margin(-12,0,0,15);
@@ -218,8 +208,12 @@ void setup()
   controlP5.addNumberbox("minBlobSize",minBlobSize,330,50,50,14).captionLabel().style().margin(-12,0,0,62);
   controlP5.addNumberbox("maxBlobSize",maxBlobSize,330,70,50,14).captionLabel().style().margin(-12,0,0,62);
   
-  Slider s1 = controlP5.addSlider("gridLines",0,20,330,100,80,10);
-  s1.setNumberOfTickMarks(20);
+  surfaceControl = controlP5.addGroup("surfaceControl",470,10);
+  surfaceControl.hideBar();
+  nLToggle = controlP5.addToggle("nonLinear",false,10,10,10,10);
+  nLToggle.captionLabel().style().margin(-12,0,0,15);
+  nLToggle.setGroup("surfaceControl");
+  
 }
 
 
@@ -239,341 +233,69 @@ void draw()
     tmpMouseOffset.y = mouseY;
   }
   
-  pushMatrix();
-  translate(mainOffset.x,mainOffset.y);
-  
-  PImage kinectImage = null;
-  int i;
-  int[] depthMap = context.depthMap();
-  
-  
-  if(autoCalibrate && planePixels == null)
-  {
-    println("AutoCalibrate !");
-    calibratePlane();
-  }
-  
-  
-  if (doCalibrate)
-  {
-    calibratePlane();
-  }
-  
-  if(!miniMode)
-  {
-    if(enableRGB)
+  pushMatrix(); //mainOffset push
+    translate(mainOffset.x,mainOffset.y);
+    
+    kinectImage = null;
+    int i;
+    depthMap = context.depthMap();
+    
+    
+    if(autoCalibrate && !surfaces[0].calibrated)
     {
-      kinectImage = context.rgbImage();
-      
-    }else
-    {
-      kinectImage = context.depthImage();
+      println("AutoCalibrate !");
+      calibrateSurfaces();
     }
     
-    if (doMask && planePixels != null )
-    {
-      kinectImage.mask(planePixels);
-    }
     
-    image(kinectImage,0,0);
-  }
-  
-  leftHorizon = lineIntersection(gbTL.x, gbTL.y, gbBL.x, gbBL.y, gbTR.x, gbTR.y, gbBR.x, gbBR.y);
-  rightHorizon = lineIntersection(gbTL.x, gbTL.y, gbTR.x, gbTR.y, gbBL.x, gbBL.y, gbBR.x, gbBR.y);
-  
-  PVector upPoint = new PVector(gbBL.x, gbBL.y - upFactor);
-
-  if (rightHorizon != null && leftHorizon != null)
-  {
-    upLPoint = lineIntersection(gbTL.x, gbTL.y, gbTL.x, gbTL.y-1, leftHorizon.x, leftHorizon.y, upPoint.x, upPoint.y);
-    upRPoint = lineIntersection(gbBR.x, gbBR.y, gbBR.x, gbBR.y-1, rightHorizon.x, rightHorizon.y, upPoint.x, upPoint.y);
-
-    if(!miniMode)
+    if (doCalibrate)
     {
+      calibrateSurfaces();
       
-      if (showDrawingLines && !nonLinearMode)
-      {
-        ellipse(leftHorizon.x, leftHorizon.y, 10, 10);
-        ellipse(rightHorizon.x, rightHorizon.y, 10, 10);
-    
-        stroke(200, 150);
-        line(leftHorizon.x, leftHorizon.y, gbBL.x, gbBL.y);
-        line(rightHorizon.x, rightHorizon.y, gbTL.x, gbTL.y);
-        line(leftHorizon.x, leftHorizon.y, gbBR.x, gbBR.y);
-        line(rightHorizon.x, rightHorizon.y, gbBR.x, gbBR.y);
-    
-        line(leftHorizon.x, leftHorizon.y, rightHorizon.x, rightHorizon.y);
-        line(leftHorizon.x, leftHorizon.y, rightHorizon.x, rightHorizon.y);
-      }
-    
-      if (showHelpers && !nonLinearMode)
-      {
-        drawRepere(leftHorizon, gbBL, gbTL, upPoint, upLPoint);
-        drawRepere(rightHorizon, gbBL, gbBR, upPoint, upRPoint);
-      }
-  
-      if (showGrid)
-      {
-        drawGrid(leftHorizon, rightHorizon, gbBL, gbTL, gbTR, gbBR);
-        drawGrid(rightHorizon, leftHorizon, gbBL, gbBR, gbTL, gbTR);
-      }
     }
     
     if(!miniMode)
     {
-      for (i=0;i<4;i++)
+      if(enableRGB)
       {
-        grabbers[i].draw();
-        stroke(255);
-        line(grabbers[i].x, grabbers[i].y, grabbers[(i+1)%4].x, grabbers[(i+1)%4].y);
-      }
-    }
-    
-    
-    if (simActive)
-    {
-      
-
-      PVector targetPoint = getProjectedPoint(new PVector(mouseX-mainOffset.x, mouseY-mainOffset.y));
-
-      //force same point at first time to avoid non-sense with speed and acc computed values
-      if (!simAlreadyActive)
-      {
-        simPoint = new TouchPoint(targetPoint.x,  targetPoint.y , 10, null, false);
-        simPoint.setState("new");
+        kinectImage = context.rgbImage();
         
       }else
       {
-        simPoint.lastPoint = new TouchPoint(simPoint.x, simPoint.y, 10, null, true);
-        simPoint.x = targetPoint.x;
-        simPoint.y = targetPoint.y;
-        simPoint.setState("update");
+        kinectImage = context.depthImage();
       }
       
-      if (!simAlreadyActive)
+      /*if (doMask && planePixels != null )
       {
-        //New point
-        tuioServer.send("update", simPoint);
-        simAlreadyActive = true;
-      }
-      else
-      {
-        //Already there
-        tuioServer.send("update", simPoint);
-      }
-
-      if (showFeedback)
-      {
-        pushMatrix();
-        translate(-mainOffset.x,-mainOffset.y);
-        feedback.drawPoint(targetPoint, -1, color(255, 255, 255));
-        popMatrix();
-      }
+        kinectImage.mask(planePixels);
+      }*/
+      
+      image(kinectImage,0,0);
     }
-    else {
-      if (simAlreadyActive) {
-        //Point destroy
-
-        simAlreadyActive = false;
-        simPoint.setState("destroy");
-        tuioServer.send("destroy", simPoint);
-      }
-    }
-  }
-
-  if (planePixelsLength > 0)
-  {
-
-    blobsImage = createImage(imageWidth, imageHeight, ARGB); 
-    blobsImage.loadPixels();
-
-    int[] floorMaskPixels = new int[pixelsLength];
-
-    PVector topLeft = new PVector(imageWidth, imageHeight);
-    PVector bottomRight = new PVector(0, 0);
     
-    
-    
-    
-    for (i=0;i<planePixelsLength;i++)
+    for(i=0;i<numSurfaces;i++)
     {
-      int targetPixelIndex = planeDepthPixels[i];
-      int refDepth = planeDepthMap[i];
-      int curDepth = depthMap[targetPixelIndex];
-      //filterImage.pixels[targetPixelIndex] = color(255,0,0,50);
-      int diffDepth = refDepth-curDepth;
-
-     // blobsImage.pixels[targetPixelIndex] = color(0,225,120,150);
-
-      if (diffDepth > minDistance)
-      {
-        if (maskFloor)
-        {
-          floorMaskPixels[targetPixelIndex] = 255;
-        }
-        
-       // blobsImage.pixels[targetPixelIndex] = color(0,50,255,150);
-        
-        if (diffDepth < maxDistance)
-        {
-          int reelX = targetPixelIndex%imageWidth;
-          int reelY = floor(targetPixelIndex/imageWidth);
-
-          topLeft.x = min(topLeft.x, reelX);
-          topLeft.y = min(topLeft.y, reelY);
-          bottomRight.x = max(bottomRight.x, reelX);
-          bottomRight.y = max(bottomRight.y, reelY);
-
-          //println(curDepth+"-"+refDepth+" = "+(curDepth-refDepth));
-          blobsImage.pixels[targetPixelIndex] = color(255,0,0,150);
-        }
-      }
+      surfaces[i].draw();
     }
-    blobsImage.updatePixels();
-    
-    
-    
-    if (topLeft.x < bottomRight.x)
-    {
-      topLeft.x -=10;
-      topLeft.y -= 10;
-      bottomRight.x += 10;
-      bottomRight.y +=10;
-      
-      int rectW = (int)(bottomRight.x-topLeft.x);
-      int rectH = (int)(bottomRight.y-topLeft.y);
-      
-      pushStyle();
-      stroke(40, 120, 230,100);
-      strokeWeight(2);
-      noFill();
-      rect(topLeft.x, topLeft.y, rectW, rectH);
-      popStyle();
-
-      //blobsImage = blobsImage.get((int)topLeft.x, (int)topLeft.y, rectW, rectH);*/
-      processBlobs(blobsImage,topLeft,rectW,rectH);
-      
-      
-      
-      if(!miniMode)
-      {
-        if (maskFloor)
-        {
-          kinectImage.mask(floorMaskPixels);
-          image(kinectImage, 0, 0);
-        }
-        
-        image(blobsImage,0,0);
-      }
-    }else
-    {
-      processBlobs(blobsImage,null,0,0);
-    }
-    
-
-  }
   
   popMatrix(); //mainOffset pop
 
    
   if(!miniMode)
   {
-   /* if (showInfos)
-    {
-      
-      
-      fill(0, 160);
-      noStroke();
-      rect(0, 0, 300, 310);
-      
-  
-      fill(255);
-      pushStyle();
-      if (showGrid) fill(100, 200, 20);
-      text("g : Show / Hide Grid", 10, 30, 200, 20);
-      popStyle();
-  
-      text("8 / 2 : Increase / Decrease grid densityr", 10, 50, 250, 20);
-  
-      pushStyle();
-      if (showDrawingLines) fill(100, 200, 20);
-      text("d : Show / Hide Drawing Lines", 10, 70, 200, 20);
-      popStyle();
-      
-      
-      pushStyle();
-      if (showHelpers) fill(100, 200, 20);
-      text("h : Show / Hide Helpers", 10, 90, 200, 20);
-      popStyle();
-  
-  
-      pushStyle();
-      if (enableRGB) fill(100, 200, 20);
-      text("k : Switch RGB / Depth Image mode", 10, 110, 200, 20);
-      popStyle();
-     
-     
-      pushStyle();
-      if (mirrorMode) fill(100, 200, 20);
-      text("r : Toggle Kinect Mirror Mode", 10, 130, 200, 20);
-      popStyle();
-  
-      pushStyle();
-      if (showLabels) fill(100, 200, 20);
-      text("l : Show / Hide Labels", 10, 150, 200, 20);
-      popStyle();
-  
-      pushStyle();
-      if (showFeedback) fill(100, 200, 20);
-      text("f : Show / Hide Feedback", 10, 170, 200, 20);
-      popStyle();
-  
-      text("c : Calibrate plane", 10, 190, 200, 20);
-  
-      pushStyle();
-      if (doMask) fill(100, 200, 20);
-      text("m : Toggle plane mask mode", 10, 210, 250, 20);
-      popStyle();
-      
-      pushStyle();
-      if (swapXY) fill(100, 200, 20);
-      text("w : Toggle swapXY", 10, 230, 250, 20);
-      popStyle();
-      
-      pushStyle();
-      if (invertX) fill(100, 200, 20);
-      text("x : Toggle invertX", 10, 250, 250, 20);
-      popStyle();
-      
-      pushStyle();
-      if (invertY) fill(100, 200, 20);
-      text("y : Toggle invertY", 10, 270, 250, 20);
-      popStyle();
-  
-      text("s : Save settings", 10, 290, 250, 20);
-  
-      pushStyle();
-      fill(0, 160);
-      rect(0, height-40, width, 40);
-  
-  
-      fill(255);
-      text("Min / Max diff ((Ctrl or Shift) & '+' / '-') : "+minDistance+" -> "+maxDistance, 10, height-35, 400, 20);
-      text("Min / Max blob size ((Alt or Nothing) & '+' / '-') : "+minBlobSize+" -> "+maxBlobSize, 10, height-15, 450, 20);
-      popStyle() ;
-    }*/
-   // text("'i' - Show / Hide infos", 10, 10, 200, 20);
+    //Additionnal infos
   }
   
-  fill(20,180);
+  fill(20,200);
   noStroke();
   rect(0, 0, width, 130);
   
   if (showFeedback && !miniMode)
   {
     feedback.draw();
-
-    for(i=0;i<goodBlobsNumber;i++)
+    
+    //change for touchplanes touchpoints
+    /*for(i=0;i<goodBlobsNumber;i++)
     {
       
       color c = getColorForIndex(touchPoints[i].id);
@@ -582,7 +304,7 @@ void draw()
       translate(mainOffset.x, mainOffset.y);
         touchPoints[i].drawPointReel(c);
       popMatrix();
-    }
+    }**/
   }
   
   
@@ -594,427 +316,12 @@ void draw()
   fill(255);
   text("Framerate "+(int)frameRate, width-100, height-35, 90, 15);
   //text("Raw blobs "+rawBlobsNumber, width-100, height-35, 90, 15);
-  text("Active blobs "+goodBlobsNumber, width-100, height-15, 90, 15);
-  popStyle();
-
   
-}
-
-
-void drawGrid(PVector firstHorizon, PVector secondHorizon, PVector longPoint, PVector midPoint, PVector sideFirstPoint, PVector sideSecondPoint)
-{
-  
-  pushStyle();
-  
-  if(!nonLinearMode)
-  {
-  
-    stroke(130, 250);
-    PVector upPoint = new PVector(midPoint.x, midPoint.y-gridLines);
-    
-    for (int i=1;i<gridLines;i++)
-    {
-      PVector diagIntersect = lineIntersection(longPoint.x, longPoint.y, upPoint.x, upPoint.y, firstHorizon.x, firstHorizon.y, midPoint.x, midPoint.y + (upPoint.y-midPoint.y)*i/gridLines);
-      if (diagIntersect == null) break;
-      PVector targetEnd = lineIntersection(diagIntersect.x, diagIntersect.y, diagIntersect.x, diagIntersect.y+1, firstHorizon.x, firstHorizon.y, longPoint.x, longPoint.y);
-      if (targetEnd == null) break;
-      PVector targetBegin = lineIntersection(targetEnd.x, targetEnd.y, secondHorizon.x, secondHorizon.y, sideFirstPoint.x, sideFirstPoint.y, sideSecondPoint.x, sideSecondPoint.y);
-    
-      line(targetEnd.x, targetEnd.y, targetBegin.x, targetBegin.y);
-    }
-    
-  }else
-  {
-    stroke(200,100);
-    for(int i=1;i<gridLines;i++)
-    {
-      PVector h1 = new PVector(gbTL.x + i*(gbTR.x-gbTL.x) / gridLines, gbTL.y + i* (gbTR.y-gbTL.y) / gridLines);
-      PVector h2 = new PVector(gbBL.x + i*(gbBR.x-gbBL.x) / gridLines, gbBL.y + i*(gbBR.y-gbBL.y) / gridLines);
-        
-      PVector v1 = new PVector(gbTL.x + i* (gbBL.x-gbTL.x) / gridLines, gbTL.y + i*(gbBL.y-gbTL.y) / gridLines);
-      PVector v2 = new PVector(gbTR.x + i* (gbBR.x-gbTR.x) / gridLines, gbTR.y + i*(gbBR.y-gbTR.y) / gridLines);
-      
-      /*if(v1.x > v2.x || h1.y > h2.y)
-      {
-        stroke(200,50,50,100);
-      }else{
-        stroke(200,100);
-      }*/
-      
-      line(h1.x,h1.y,h2.x,h2.y);
-      line(v1.x,v1.y,v2.x,v2.y);
-    }
-  }
-    
-  
+  //change for surface blobs
+  //text("Active blobs "+goodBlobsNumber, width-100, height-15, 90, 15);
   popStyle();
 }
 
-void drawRepere(PVector horizon, PVector longPoint, PVector midPoint, PVector upPoint, PVector upMPoint)
-{
-  if (upMPoint == null) return;
-
-  ellipse(upPoint.x, upPoint.y, 5, 5);
-  pushStyle(); 
-  stroke(200, 100);
-  line(longPoint.x, longPoint.y, upPoint.x, upPoint.y);
-  line(horizon.x, horizon.y, upPoint.x, upPoint.y);
-
-  ellipse(upMPoint.x, upMPoint.y, 5, 5);
-  line(midPoint.x, midPoint.y, upMPoint.x, upMPoint.y);
-  stroke(250, 250, 20, 100);
-  line(longPoint.x, longPoint.y, upMPoint.x, upMPoint.y);
-  popStyle();
-}
-
-
-float calculatePerspCoord(PVector firstHorizon, PVector secondHorizon, PVector simPoint, PVector firstPoint, PVector secondPoint, PVector upPoint, PVector sideFirstPoint, PVector sideSecondPoint)
-{
-
-  PVector bIntersect = lineIntersection(firstHorizon.x, firstHorizon.y, simPoint.x, simPoint.y, firstPoint.x, firstPoint.y, secondPoint.x, secondPoint.y);
-  
-  float maxLineDist = PVector.dist(firstPoint,secondPoint);
-  if (PVector.dist(bIntersect, firstPoint) > maxLineDist) {
-    //todo stop sending here if clip stops
-    bIntersect = secondPoint;
-  }
-  else if (PVector.dist(bIntersect, secondPoint) > maxLineDist) {
-    bIntersect = firstPoint;
-  }
-  
-  if(upPoint == null) return 0;
-  PVector upBIntersect = lineIntersection(bIntersect.x, bIntersect.y, bIntersect.x, bIntersect.y-1, secondHorizon.x, secondHorizon.y, upPoint.x, upPoint.y);
-  PVector diagIntersect = lineIntersection(firstPoint.x, firstPoint.y, upPoint.x, upPoint.y, bIntersect.x, bIntersect.y, upBIntersect.x, upBIntersect.y);
-  if(diagIntersect == null) return 0;
-  PVector targetIntersect = lineIntersection(secondHorizon.x, secondHorizon.y, diagIntersect.x, diagIntersect.y, secondPoint.x, secondPoint.y, upPoint.x, upPoint.y);
-
-  float targetY = PVector.dist(secondPoint, targetIntersect) / PVector.dist(secondPoint, upPoint);
-
-  pushStyle();
-  stroke(255, 20, 20, 150);
-  fill(255, 20, 20, 150);
-
-  if (showDrawingLines)
-  {
-    line(firstHorizon.x, firstHorizon.y, bIntersect.x, bIntersect.y);
-
-
-    //ellipse(upBIntersect.x,upBIntersect.y,5,5);
-    line(bIntersect.x, bIntersect.y, diagIntersect.x, diagIntersect.y);
-
-    fill(50, 120, 230, 200);
-    stroke(50, 120, 230);
-    ellipse(diagIntersect.x, diagIntersect.y, 5, 5);
-    line(secondHorizon.x, secondHorizon.y, diagIntersect.x, diagIntersect.y);
-  }
-  else
-  {
-    PVector closerIntersect = lineIntersection(firstHorizon, bIntersect, sideFirstPoint, sideSecondPoint);
-    line(closerIntersect.x, closerIntersect.y, bIntersect.x, bIntersect.y);
-  }
-
-  popStyle();
-
-  return targetY;
-}
-
-
-float calculateNonLinearCoord(PVector va, PVector va2, PVector vb, PVector vb2, PVector ve)
-{
-  float a = (va2.x -va.x)*(vb2.y - vb.y) - (vb2.x - vb.x) * (va2.y - va.y);
-  float b = (va2.x - va.x) * (vb.y - ve.y) + (vb2.y - vb.y) * (va.x - ve.x) + (vb2.x - vb.x) * (ve.y - va.y) + (va2.y - va.y) * (ve.x - vb.x);
-  float c = (vb.y - ve.y) * (va.x - ve.x) + (vb.x - ve.x) * (ve.y - va.y);
-  
-  // ax² + bx + c = 0
-  float delta = b*b - 4*a*c;
-  float result1 = (-b-sqrt(delta))/(2*a);
-  float result2 = (-b+sqrt(delta))/(2*a);
-  
-  if(result1 > 0 && result1 < 1)
-  {
-    return result1;
-  }else if(result2 > 0 && result2 < 1)
-  {
-    return result2;
-  }
-  
-  return 0;
-}
-
-
-public void calibratePlane()
-{
-  int[] depthMap = context.depthMap();
-  int i;
-
-
-
-  planeMask.colorMode(ALPHA);
-  planeMask.beginDraw();
-  planeMask.background(100);
-  planeMask.fill(255);
-  planeMask.noStroke();
-  planeMask.beginShape();
-  for (i=0;i<grabbers.length;i++)
-  {
-    planeMask.vertex(grabbers[i].x, grabbers[i].y);
-  }
-  planeMask.endShape(CLOSE);
-  planeMask.endDraw();
-
-
-  /*PImage planeMask = new PImage(imageWidth,imageHeight,ALPhA);
-   planeMask.loadPixels();*/
-  planePixels = planeMask.pixels;
-  /*planeMask.updatePixels();*/
-
-  boolean[] planeBuffer = new boolean[pixelsLength];
-
-  planePixelsLength = 0;
-
-  //Get the length of the plane pixels array
-  for (i=0;i<pixelsLength;i++)
-  {
-    if (planePixels[i] == -1)
-    {
-      planeBuffer[i] = true;
-      planePixelsLength++;
-    }
-  }
-
-  //fill the planeDepthPixels array with pixels indexes and planeDepthMap with depthMap data
-
-
-  planeDepthPixels = new int[planePixelsLength];
-  planeDepthMap = new int[planePixelsLength];
-
-  int planeDepthPixelsIndex = 0;
-  for (i=0;i<pixelsLength;i++)
-  {
-    if (planeBuffer[i])
-    {
-      planeDepthPixels[planeDepthPixelsIndex] = i;
-      planeDepthMap[planeDepthPixelsIndex] = depthMap[i];
-      planeDepthPixelsIndex++;
-    }
-  }
-}
-
-
-void processBlobs(PImage img, PVector offset, int w, int h)
-{
-  goodBlobsNumber = 0;
-  rawBlobsNumber = 0;
-  TouchPoint[] blobPoints;
-  int i;
-  
-  if(w == 0 || h == 0)
-  {
-    blobPoints = new TouchPoint[0];
-  }else
-  {
-    
-    /*bd = new Detector(this,0,0, blobsImage.width, blobsImage.height, 255 );
-    bd.findBlobs(blobsImage.pixels, blobsImage.width, blobsImage.height);
-    bd.loadBlobsFeatures();// to call always before to use a method returning or processing a blob feature
-    bd.weightBlobs(true);
-    
-    rawBlobsNumber = bd.getBlobsNumber();*/
-    
-    cv.copy(blobsImage);
-    cv.ROI((int)offset.x,(int)offset.y,w,h);
-    
-    Blob[] blobs = cv.blobs(minBlobSize,maxBlobSize,20,false,4);
-    rawBlobsNumber = blobs.length;
-    
-    blobPoints = new TouchPoint[rawBlobsNumber];
-    
-    for (i = 0; i < rawBlobsNumber; i++)
-    {
-      Rectangle r = blobs[i].rectangle;
-      
-      PVector reelCoordVec = new PVector(r.x + r.width/2, r.y+r.height/2);
-      PVector tmpVec = getProjectedPoint(reelCoordVec);
-      blobPoints[goodBlobsNumber] = new TouchPoint(tmpVec.x, tmpVec.y, blobs[i].area, reelCoordVec, false);
-      //println(reelCoordVec+" /" +tmpVec);
-      goodBlobsNumber++;
-    }
-  
-    while (blobPoints.length > goodBlobsNumber) blobPoints = (TouchPoint[]) shorten(blobPoints);
-  }
-  
-
-  int pLen = touchPoints.length;
-  
-  float minDist = 0;
-  int minIndex = -1;
-  float curDist = 0;
-
-  if (goodBlobsNumber >= pLen)
-  {
-
-    //println("");
-    //println("*** more or equal");
-    for (i = 0;i<pLen;i++)
-    {
-      //println("touchPoint " + i +", id :"+touchPoints[i].id);
-
-      minIndex = -1;
-      curDist = 0;
-      minDist = 0;
-
-      for (int j=0;j<goodBlobsNumber;j++)
-      {
-        if (blobPoints[j].linked) {
-          //println(" -> blob "+j+" is already linked");
-          //println(" -> test distance with blob "+j+" :"+curDist);
-        }
-        else {
-          curDist = PVector.dist(touchPoints[i], blobPoints[j]);
-          //println(" -> test distance with blob "+j+" :"+curDist);
-
-          if (minIndex == -1 || curDist < minDist)
-          {
-            minDist = curDist;
-            minIndex = j;
-          }
-        }
-      }
-
-      //println(" -> linked with index :"+minIndex+", distance "+round(minDist)+", tmpId = "+blobPoints[minIndex].id+", touchId = "+touchPoints[i].id);
-      blobPoints[minIndex].id = touchPoints[i].id;
-      blobPoints[minIndex].lastPoint = touchPoints[i];
-      blobPoints[minIndex].linked = true;
-      
-      /*if(PVector.dist(blobPoints[minIndex], blobPoints[minIndex].lastPoint) < .005)
-      {
-        blobPoints[minIndex] = blobPoints[minIndex].lastPoint;
-      }*/
-      
-      //blobPoints[minIndex].x = blobPoints[minIndex].lastPoint.x + (blobPoints[minIndex].x - blobPoints[minIndex].lastPoint.x) * .5;
-      //blobPoints[minIndex].y = blobPoints[minIndex].lastPoint.y + (blobPoints[minIndex].y - blobPoints[minIndex].lastPoint.y) * .5;
-      
-    }
-    
-    
-    
-    for (i = 0; i< goodBlobsNumber ;i++)
-    {
-
-      if (!blobPoints[i].linked)
-      {
-        //New point
-        //println("new Point");
-        blobPoints[i].setState("new");
-      }
-      else
-      {
-        //blobPoints[i].setState("update");
-      }
-    }
-    
-    
-  }
-  else
-  {
-    //println("************************ LESS ***");
-
-    for (i = 0;i<pLen;i++)
-    {
-      touchPoints[i].linked = false;
-    }
-
-
-    for (i = 0;i<goodBlobsNumber;i++)
-    {
-      //println("blobPoint" + i +", id :"+blobPoints[i].id);
-
-      minIndex = -1;
-      curDist = 0;
-      minDist = 0;
-      
-      TouchPoint[] alivePoints = new TouchPoint[0];
-      
-      for (int j=0;j<pLen;j++)
-      {
-        if (touchPoints[j].linked) {
-         // println(" -> touchpoint "+j+" is already linked");
-        }
-        else {
-
-          curDist = PVector.dist(blobPoints[i], touchPoints[j]);
-          //println(" -> test distance with touchpoint "+j+" :"+curDist);
-
-          if (minIndex == -1 || curDist < minDist)
-          {
-            minDist = curDist;
-            minIndex = j;
-          }
-        }
-      }
-
-      if (minIndex != -1)
-      {
-        //println(" -> linked with index :"+minIndex+", distance "+minDist+", touchId :"+touchPoints[minIndex].id);
-        blobPoints[i].id = touchPoints[minIndex].id;
-        blobPoints[i].lastPoint = touchPoints[minIndex];
-        touchPoints[minIndex].linked = true;
-      }
-    }
-    
-  }
-
-
-  touchPoints = blobPoints;
-  tuioServer.send("update",touchPoints);
-}
-
-
-
-PVector getProjectedPoint(PVector touchPoint)
-{
-
-
-  pushStyle();
-    noStroke();
-    pushMatrix();
-    translate(touchPoint.x, touchPoint.y);
-    noFill();
-    stroke(200,150);
-    ellipse(0, 0, 10, 10);
-    popMatrix();
-  popStyle();
-
-
-
-  float targetX, targetY;
-  if(!nonLinearMode)
-  {
-    targetX = calculatePerspCoord(leftHorizon, rightHorizon, touchPoint, gbBL, gbBR, upRPoint, gbTL, gbTR);
-    targetY = 1 - calculatePerspCoord(rightHorizon, leftHorizon, touchPoint, gbBL, gbTL, upLPoint, gbBR, gbTR);
-  }else
-  {
-    targetX = calculateNonLinearCoord(gbTL, gbTR, gbBL, gbBR, touchPoint);
-    targetY = calculateNonLinearCoord(gbTR, gbBR, gbTL, gbBL, touchPoint);
-  }
-  
-  targetX = constrain(targetX, 0, 1);
-  targetY = constrain(targetY, 0, 1);
-  
-  if(swapXY)
-  {
-    float tmp = targetX;
-    targetX = targetY;
-    targetY = tmp;
-  }
-  
-  if (invertX) targetX = 1-targetX;
-  if (invertY) targetY = 1-targetY;
-  
-  //println("targetX / Y ="+targetX+", "+targetY);
-
-  return new PVector(targetX, targetY);
-}
 
 color getColorForIndex(int i)
 {
@@ -1035,15 +342,21 @@ void setMiniMode()
   }
 }
       
-
+void calibrateSurfaces()
+{
+  for(int i=0;i<numSurfaces;i++)
+  {
+    surfaces[i].calibrate();
+  }
+}
 
 void saveConfig()
 {
-  for(int i=0;i<grabbers.length;i++)
+  /*for(int i=0;i<grabbers.length;i++)
   {
     config.getChild("grabbers").getChild(i).setInt("x",(int)grabbers[i].x);
     config.getChild("grabbers").getChild(i).setInt("y",(int)grabbers[i].y);
-  }
+  }*/
   
   
   
@@ -1056,7 +369,7 @@ void saveConfig()
   config.getChild("startup").setString("showHelpers", str(showHelpers));
   config.getChild("startup").setString("showGrid", str(showGrid));
   config.getChild("startup").setString("showInfos", str(showInfos));
-  config.getChild("startup").setString("showDrawingLines", str(showDrawingLines));
+  config.getChild("startup").setString("showIds", str(showIds));
   config.getChild("startup").setString("showFeedback", str(showFeedback));
   config.getChild("startup").setString("showLabels", str(showLabels));
   config.getChild("startup").setString("autoCalibrate",str(autoCalibrate));
@@ -1068,31 +381,64 @@ void saveConfig()
   config.getChild("detection").setString("invertY",str(invertY));
   config.getChild("detection").setString("swapXY",str(swapXY));
   
+  for(int i=0;i<numSurfaces;i++)
+  {
+    if(surfaces[i].type == TouchSurface.TOUCH_PLANE)
+    {
+      for(int j=0;j<((TouchPlane)surfaces[i]).grabbers.length;j++)
+      {
+        config.getChild("surfaces").getChildren()[i].getChild(j).setInt("x",(int)((TouchPlane)surfaces[i]).grabbers[j].x);
+        config.getChild("surfaces").getChildren()[i].getChild(j).setInt("y",(int)((TouchPlane)surfaces[i]).grabbers[j].y);
+      }
+    }
+  }
+  
+  
   println(config.toString());
   config.save("data/config.xml");
   println("config saved !");
 }
 
-void mousePressed()
+void mousePressed(MouseEvent e)
 {
+  super.mousePressed(e);
+  
   if (criticalStop) return;
-
-  Boolean grabberPressed = false;
-  for (int i=0;i<4;i++)
+  
+  TouchSurface tmpSurface = null;
+  boolean sPressed = false;
+  
+  for(int i=0;i<numSurfaces;i++)
   {
-    if (grabbers[i].mousePressed())
+    if(surfaces[i].mousePressed())
     {
-      grabberPressed = true;
-      return;
+      doCalibrate = true;
+      sPressed = true;
+      tmpSurface = surfaces[i];
+      if(!e.isShiftDown()) break;
     }
   }
   
-  if (pixelInPoly(grabbers,new PVector(mouseX-mainOffset.x,mouseY-mainOffset.y)))
+  
+  if(mouseY > 110)
   {
-    simActive = true;
-    simAlreadyActive = false;
-  }else if(mouseY > 110)
-  {
+    activeSurface = tmpSurface;
+    if(activeSurface != null)
+    {
+      surfaceControl.show();
+      if(activeSurface.type == TouchSurface.TOUCH_PLANE)
+      {
+        nLToggle.setColorBackground(activeSurface.col);
+        nLToggle.setColorActive(color(255,255,255));
+        nLToggle.setState(((TouchPlane)activeSurface).nonLinearMode);
+      }
+    }else
+    {
+      surfaceControl.hide();
+    }
+    
+    if(sPressed) return;
+    
     println("mouseY :"+mouseY);
     tmpMouseOffset = new PVector(mouseX,mouseY);
     tmpInitOffset = mainOffset;
@@ -1102,30 +448,39 @@ void mousePressed()
 
 void mouseReleased()
 {
+  super.mouseReleased();
+  
   if (criticalStop) return;
-
-  for (int i=0;i<4;i++)
+  
+  for(int i=0;i<numSurfaces;i++)
   {
-    grabbers[i].pressed = false;
+    surfaces[i].mouseReleased();
   }
-
-  simActive = false;
-  offsetting = false;
+  
+  doCalibrate=false;
 }
 
 
 void controlEvent(ControlEvent e)
 {
+  
  if(e.isTab())
  {
   miniMode = e.tab().name().equals("miniMode");
   setMiniMode();
  }else{
    String n = e.controller().name(); 
+   println(n);
    if(n.equals("mirrorMode"))
    {
      context.setMirror(mirrorMode);
-   } 
+   }else if(n.equals("nonLinear"))
+   {
+     if(activeSurface != null)
+     {
+       ((TouchPlane)activeSurface).nonLinearMode = e.controller().value() == 1;
+     }
+   }
  }
 }
 
@@ -1175,7 +530,7 @@ void keyPressed(KeyEvent e)
     break;
 
   case 'c':
-    calibratePlane();
+    calibrateSurfaces();
     break;
     
   case 'k':
@@ -1204,14 +559,14 @@ void keyPressed(KeyEvent e)
     break;
 
   case 'm':
-
+    
     doMask = !doMask;
-    maskFloor = doMask;
+    /*maskFloor = doMask;
     println("doMask & maskFloor "+doMask);
     if (doMask && planePixels == null)
     {
-      calibratePlane();
-    }
+      calibrateSurfaces();
+    }*/
 
     break;
     

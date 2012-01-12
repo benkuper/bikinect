@@ -27,6 +27,8 @@ static public class Tokens
   static final int GREATEST = 5;
   static final int AVERAGE = 6;
   static final int GATE = 7;
+  static final int SUM = 8;
+  static final int MINUS = 9;
   
   static final int AND = 0;
   static final int OR = 1;
@@ -49,7 +51,7 @@ static public class Tokens
   static final int STANDBY = 2;
   
   static final String[] processorTypesToken = {"direct","mapped","distance","rotation","boolean","conditionnal","filtered","action","multi"};
-  static final String[] processorFiltersToken = {"none","less_than","greater_than","between","lowest","greatest","average","gate"};
+  static final String[] processorFiltersToken = {"none","less_than","greater_than","between","lowest","greatest","average","gate","sum","minus"};
   static final String[] processorOperatorsToken = {"and","or"};
   static final String[] processorOverflowsToken = {"none","zero","clip","loop"};
   static final String[] processorEffectsToken = {"none","trigger","toggle"}; 
