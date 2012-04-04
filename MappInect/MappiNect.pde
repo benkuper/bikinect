@@ -83,7 +83,8 @@ void setup()
   
    if(context.enableScene() == false)
   {
-     text("Can't open the sceneMap, maybe the camera is not connected!"); 
+     text("Can't open the depthMap, maybe the camera is not connected!",10,10,200,100);
+     size(220,120); 
      criticalStop = true;
   }
   
@@ -96,22 +97,9 @@ void setup()
 
   // enable depthMap generation
   //context.enableRGB();
-<<<<<<< .mine
  
   
  
-=======
-  if(context.enableDepth() == false)
-  {
-    size(300,60);
-    text("Can't open the depthMap, maybe the camera is not connected!",10,10,280,40);
-    println("Can't open the depthMap, maybe the camera is not connected!");
-    criticalStop = true;
-    return;
-  }
-  
-  context.enableScene();
->>>>>>> .r41
 
   // enable skeleton generation for all joints
   context.enableUser(SimpleOpenNI.SKEL_PROFILE_ALL);
@@ -128,16 +116,7 @@ void setup()
   jointsConstants = tmpjointsConstants;
 
   jointsNum = jointsConstants.length;
- 
-  if(context.depthWidth() == 0)
-  {
-    size(300,40);
-    text("Can't get the camera width / height, please make sure it's connected and working",10,10,300,20);
-    println("Can't get the camera width / height, please make sure it's connected and working");
-    criticalStop = true;
-    return;
-  }
-  
+
   size(context.depthWidth(), context.depthHeight()); 
 
   
