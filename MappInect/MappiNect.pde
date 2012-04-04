@@ -73,15 +73,34 @@ void setup()
   
   readSettings();
   
+  context = new SimpleOpenNI(this);
+  if(context.enableDepth() == false)
+  {
+     text("Can't open the depthMap, maybe the camera is not connected!",10,10,200,100);
+     size(220,120); 
+     criticalStop = true;
+  }
+  
+   if(context.enableScene() == false)
+  {
+     text("Can't open the sceneMap, maybe the camera is not connected!"); 
+     criticalStop = true;
+  }
+  
   if(criticalStop)
   {
     return;
   }
   
-  context = new SimpleOpenNI(this);
+  
 
   // enable depthMap generation
   //context.enableRGB();
+<<<<<<< .mine
+ 
+  
+ 
+=======
   if(context.enableDepth() == false)
   {
     size(300,60);
@@ -92,6 +111,7 @@ void setup()
   }
   
   context.enableScene();
+>>>>>>> .r41
 
   // enable skeleton generation for all joints
   context.enableUser(SimpleOpenNI.SKEL_PROFILE_ALL);
