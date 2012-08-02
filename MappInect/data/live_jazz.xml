@@ -248,7 +248,7 @@
 				<processor type="boolean" filter="less_than" label="Next Mapping Set">
 					<processor type="distance" >
 						<element type="joint" target="right_hand" property="position" />
-						<element type="point" x="600" y="-200" z="1710" />
+						<element type="joint" target="left_knee" property="position" />
 					</processor>
 					<processor type="direct">
 						<element type="value" value="200" />

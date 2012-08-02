@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<mappings>	
+	<mappingset id="liveControls" permanent="true" inScope="false">
+		<mapping id="nextLine" builderX="100" builderY="200">
+			<processor type="boolean" effect="trigger" filter="less_than" label="Bongos and Piano" builderX="100" builderY="200">
+				<processor type="distance" >
+					<element type="joint" target="right_hand" property="position" />
+					<element type="point" x="450" y="-210" z="2040" />
+				</processor>
+				<processor type="direct">
+					<element type="value" value="200" />
+				</processor>
+			</processor>
+			<output>
+				<midi type="controller" channel="1" valueMap="1" />
+			</output>
+		</mapping>
+		
+		<mapping id="nextLine" builderX="300" builderY="100">
+			<processor type="boolean" effect="trigger" filter="less_than" label="Kick Drum">
+				<processor type="distance" >
+					<element type="joint" target="left_hand" property="position" />
+					<element type="point" x="450" y="-210" z="2040"  />
+				</processor>
+				<processor type="direct">
+					<element type="value" value="200" />
+				</processor>
+			</processor>
+			<output>
+				<midi type="controller" channel="8" valueMap="1" />
+			</output>
+		</mapping>
+		
+		
+		<mapping id="nextSet">
+			<processor type="action" action="nextSet" showFeedback="false">
+				<processor type="boolean" filter="less_than" label="Next Mapping Set">
+					<processor type="distance" >
+						<element type="joint" target="right_hand" property="position" />
+						<element type="point" x="600" y="-200" z="1710" />
+					</processor>
+					<processor type="direct">
+						<element type="value" value="200" />
+					</processor>
+				</processor>
+			</processor>
+			<output>
+			</output>
+		</mapping>
+		
+		<mapping id="stopAll">
+			<processor type="conditionnal" effect="trigger"  label="StopAll">
+				<processor type="boolean" filter="less_than" >
+					
+					<processor type="distance">
+						<element type="joint" target="left_hand" property="position" />
+						<element type="joint" target="head" property="position" />
+					</processor>
+					
+					<processor type="direct">
+						<element type="value" value="200"/>
+					</processor>
+				</processor>
+				
+				<processor type="boolean" filter="less_than" >
+					
+					<processor type="distance">
+						<element type="joint" target="right_hand" property="position" />
+						<element type="joint" target="head" property="position" />
+					</processor>
+					
+					<processor type="direct">
+						<element type="value" value="200"/>
+					</processor>
+				</processor>
+			</processor>
+			<output>
+				<midi type="controller" channel="9" valueMap="1" />
+			</output>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="start">
+		<mapping id="start">
+			<processor type="boolean" effect="trigger" filter="less_than" label="Push to start">
+				<element type="joint" target="left_hand" property="position" axis="z" />
+				<element type="value" value="1000" />
+			</processor>	
+			<output>
+				<midi type="controller" channel="2" valueMap="1" />
+			</output>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="break">
+		<mapping id="breaktoggle">
+			<processor type="boolean" filter="less_than" effect="trigger" label="Break toggle">
+				<processor type="distance" >
+					<element type="joint" target="left_elbow" property="position" />
+					<element type="joint" target="right_elbow" property="position" />
+				</processor>
+				<processor type="direct" >
+					<element type="value" value="200" />
+				</processor>
+			</processor>
+			<output>
+				<midi type="controller" channel="7" valueMap="1" />
+			</output>
+		</mapping>
+	</mappingset>
+	
+	<mappingset id="live_filters">
+		<mapping id="volume">
+			<processor type="filtered" filter="gate" inactive="standby" minValue="200" maxValue="800">
+				<processor type="distance" label="Volume">
+					<element type="joint" target="left_hand" property="position" />
+					<element type="joint" target="right_hand" property="position" />
+				</processor>
+				<processor type="boolean" filter="less_than">
+					<element type="joint" target="left_hand" property="position" axis="z" />
+					<element type="value" value="1000" />
+				</processor>
+			</processor>
+			<output>
+				<midi type="controller" channel="3" valueMap="1" />
+			</output>
+		</mapping>
+		
+		<mapping id="filter">
+			<processor type="rotation">
+				<element type="joint" target="left_hand" property="position" axis="xy" />
+				<element type="joint" target="right_hand" property="position" axis="xy" />
+			</processor>
+			<output>
+				<midi type="controller" channel="4" valueMap="1" />
+			</output>
+		</mapping>
+		
+		<mapping id="filtertoggle">
+			<processor type="boolean" filter="less_than" effect="toggle" operator="and" label="Filter toggle">
+				<processor type="distance" >
+					<element type="joint" target="left_hand" property="position" />
+					<element type="joint" target="left_foot" property="position" />
+				</processor>
+				<processor type="direct" >
+					<element type="value" value="200" />
+				</processor>
+			</processor>
+			
+			<output>
+				<midi type="controller" channel="5" valueMap="1" />
+			</output>
+		</mapping>
+		
+	</mappingset>
+	
+	
+	<mappingset id="keyboard Impro">
+		<mapping id="midi_keyboard">
+			<processor type="multi">
+				<processor type="filtered" filter="gate" inactive="standby" minValue="-300" maxValue="300">
+					<processor type="mapped">
+						<element type="joint" target="right_hand" property="position" axis="x" />
+					</processor>
+					
+					<processor type="boolean" filter="less_than">
+						<element type="joint" target="right_hand" property="position" axis="z" />
+						<element type="value" value="1500" />
+					</processor>
+				</processor>
+				
+				<processor type="filtered" filter="gate" inactive="standby" minValue="-300" maxValue="300">
+					<processor type="mapped">
+						<element type="joint" target="right_hand" property="position" axis="y" />
+					</processor>
+					
+					<processor type="boolean" filter="less_than">
+						<element type="joint" target="right_hand" property="position" axis="z" />
+						<element type="value" value="1500" />
+					</processor>
+				</processor>
+			</processor>
+			
+			<output>
+				<midi type="note" device="0" channel="1" channelMap="1" velocityMap="2" minChannel="60" maxChannel="65" minVelocity="0" maxVelocity="127" distinctNotes="true" />
+				<osc host="127.0.0.1" address="/painting" port="4444" />
+			</output>
+			
+		</mapping>
+		
+		<mapping id="clearOSC">
+			<processor type="boolean" effect="trigger" filter="greater_than">
+				<element type="joint" target="left_hand" property="position" axis="y" />
+				<element type="value" value="400" />
+			</processor>
+		
+			<output>
+				<osc host="127.0.0.1" address="/clearCanvas" port="4444" />
+			</output>
+		</mapping>
+	</mappingset>
+	
+</mappings>

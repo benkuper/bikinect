@@ -1,12 +1,24 @@
 <mappings>
   <mappingset>
     <mapping id="distance_toggle_dmx" builderX="557" builderY="240">
-      <processor label="Hands distance to DMX" type="distance" minValue="100" maxValue="800" showFeedback="false" builderX="307" builderY="243">
-        <element type="joint" target="left_hand" property="position" builderX="37" builderY="86"/>
-        <element type="joint" target="head" property="position" builderX="38" builderY="372"/>
-      </processor>
+	  <processor type="multi">
+		  <processor label="Hands distance to DMX" type="distance" minValue="100" maxValue="800" showFeedback="false" builderX="307" builderY="243">
+			<element type="joint" target="left_hand" property="position" builderX="37" builderY="86"/>
+			<element type="joint" target="head" property="position" builderX="38" builderY="372"/>
+		  </processor>
+			<processor type="direct">
+				<element type="value" value="255" />
+			</processor>
+			<processor type="direct">
+				<element type="value" value="255" />
+			</processor>
+			<processor type="direct">
+				<element type="value" value="255" />
+			</processor>
+	  </processor>
       <output>
         <dmx minOut="0" maxOut="255" builderX="804" builderY="226"/>
+		<dmx startChannel="2" minOut="255" maxOut="255" builderX="804" builderY="226"/>
       </output>
     </mapping>
   </mappingset>

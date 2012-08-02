@@ -1,4 +1,4 @@
-
+  
 
 /* --------------------------------------------------------------------------
  * SimpleOpenNI User Test
@@ -145,7 +145,10 @@ void readSettings()
   if(boolean(midiConfig.getString("active")))
   {
     devices =  RWMidi.getOutputDevices();
-    setMidiOutDevice(midiConfig.getInt("outDeviceID"));
+    println("num Midi devices : "+devices.length);
+    int outDeviceID = midiConfig.getInt("outDeviceID");
+    if(outDeviceID >= devices.length) outDeviceID = 0;
+    setMidiOutDevice(outDeviceID);
   }
   
   
