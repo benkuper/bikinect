@@ -7,10 +7,10 @@
 	<osc active="true" method="udp" inPort="4000" outPort="4444" host="127.0.0.1" addressPrefix="/mappInect" /> <!-- OSC DEFAULT SETTINGS. Method can only be "udp" at this time. -->
 	
 	<!-- DMX SETTINGS -->
-	<dmx active="true" hardware="dmxpro" port="COM5" baudrate="115000" numChannels="512" />
+	<dmx active="true" hardware="dmxpro" port="COM3" baudrate="115000" numChannels="512" />
 	
 	<!-- STARTUP -->
-	<startup sendMappings="true" showInfos="true" showHandsCoords="true" showMidiDevices="true" defaultMappingFile="test.xml" />
+	<startup sendMappings="true" showInfos="true" showHandsCoords="true" showMidiDevices="true" defaultMappingFile="live_jazz.xml" />
 	
 	<!-- KINECT SETTINGS -->
 	<kinect sdk="openni" /> <!-- sdk can be either "openni" or "microsoft" (not implemented yet). -->
